@@ -5,6 +5,7 @@ import datetime
 import random as rand
 from code_map import Inputs
 
+rand.seed(1337)
 
 class PowerMeter:
     def __init__(self, meter_id, response_time, up_flex_volume, down_flex_volume, direction, sleep_time, consumption_data, area):
