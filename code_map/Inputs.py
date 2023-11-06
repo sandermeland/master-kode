@@ -73,12 +73,12 @@ def get_afrr_activation_data(tf : GlobalVariables, afrr_directory : str, directi
         data = pd.read_csv(file_path)
         data.rename(columns = {"Balancing Time Unit (Automatic Frequency Restoration Reserve (aFRR))" : "Time"}, inplace = True)
         data = data.loc[data["Source"] == "Not specified"]
-        print(data.columns)
+        #print(data.columns)
         # Create a list of columns to be dropped
         columns_to_drop = [col for col in data.columns if not col.startswith(start_string) and not col.startswith("Time")]
         # Drop the columns from the DataFrame
         data = data.drop(columns=columns_to_drop)
-        print(data.columns)
+        #print(data.columns)
         #data.drop(columns = ["Source"], inplace = True)
         afrr_dfs.append(data)
         
@@ -125,11 +125,21 @@ def get_afrr_activation_data(tf : GlobalVariables, afrr_directory : str, directi
     
     filtered_df.sort_values(by = "Time", inplace = True)
     filtered_df.reset_index(inplace = True, drop = True)
+    filtered_df.iloc[:, 1:6] = filtered_df.iloc[:, 1:6].astype(float)
+
     
     return filtered_df
 
-#afrr_activation = get_afrr_activation_data(tf = one_day, afrr_directory = '../master-data/aFRR_activation/', direction = "Up")
+afrr_activation = get_afrr_activation_data(tf = one_day, afrr_directory = '../master-data/aFRR_activation/', direction = "Up")
+afrr_activation.columns
+afrr_activation[afrr_activation.columns[1:6]]
 #afrr_activation.to_csv("only_up_activations.csv")
+
+afrr_activation.iloc[:, 1:6] = afrr_activation.iloc[:, 1:6].astype(float)
+
+afrr_activation.columns
+
+
 
 def get_timestamps(tf : GlobalVariables):
     """ Function to get timestamps for a given time frame
