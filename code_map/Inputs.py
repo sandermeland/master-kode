@@ -3,7 +3,6 @@ import pandas as pd
 import os
 from zoneinfo import ZoneInfo
 from functools import reduce
-
 import pytz
 
 @dataclass
@@ -18,14 +17,14 @@ class GlobalVariables:
     
 
 
-one_hour = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 15, end_hour = 16, area = "NO5") # it may be possible to start from hour 14
+one_hour = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 15, end_hour = 16) # it may be possible to start from hour 14
 
 
-one_day = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 0, end_hour = 23, area = "NO5")
+one_day = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 0, end_hour = 23)
 
-half_month =  GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 14, end_day = 30, start_hour = 0, end_hour = 23, area = "NO5")
+half_month =  GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 14, end_day = 30, start_hour = 0, end_hour = 23)
 
-one_month = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 1, end_day = 30, start_hour = 0, end_hour = 23, area = "NO5")
+one_month = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 1, end_day = 30, start_hour = 0, end_hour = 23)
 
 
 # will have to add a constraint for timeframe
@@ -89,6 +88,17 @@ def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe, markets):
 #freq_df.head()
 
 def get_afrr_activation_data(tf : GlobalVariables, afrr_directory : str, direction : str):
+    """
+    Get a dataframe of the activation volumes for afrr up or down for each hour in the timeframe
+
+    Args:
+        tf (GlobalVariables): the wanted timeframe where the data is wanted
+        afrr_directory (str): relative path to the directory where the afrr data is stored
+        direction (str): either "Up" or "Down" depending on which direction of afrr is wanted
+
+    Returns:
+        pd.DataFrame: a dataframe of the activation volumes for afrr up or down for each hour in the timeframe
+    """
     afrr_files_list = [file for file in os.listdir(afrr_directory) if file.endswith('.csv')]
     afrr_dfs = []
     start_string = 'Regulation ' + direction + ' Activated'
@@ -112,13 +122,6 @@ def get_afrr_activation_data(tf : GlobalVariables, afrr_directory : str, directi
     afrr_df = reduce(lambda left, right: pd.merge(left, right, left_index=True, right_index=True, how='outer'), afrr_dfs)
     afrr_df = afrr_df.reset_index()
 
-        
-    #afrr_df = pd.concat(afrr_dfs, ignore_index= True)
-    #print(afrr_df.head())
-    
-   
-    #afrr_df = afrr_df[afrr_df["Time"] != "Balancing Time Unit (Automatic Frequency Restoration Reserve (aFRR))"]
-    #print(afrr_df["Time"].str.slice(0, 16))
     afrr_df["Time"] = afrr_df["Time"].str.slice(0, 16)
     
     DST_TRANSITION = '2023-03-26 02:00:00'
@@ -139,31 +142,20 @@ def get_afrr_activation_data(tf : GlobalVariables, afrr_directory : str, directi
     end_datetime = pd.Timestamp(year = tf.year, month= tf.end_month, day=tf.end_day, hour= tf.end_hour, tz = "Europe/Oslo")
     filtered_df = afrr_df[(afrr_df["Time"] >= start_datetime) & (afrr_df["Time"] <= end_datetime)]
     
-    """ generation_data = filtered_df.loc[filtered_df["Source"] == "Generation"]
-    load_data = filtered_df.loc[filtered_df["Source"] == "Load"]
-    
-    generation = (generation_data.applymap(lambda x: x > 0 if isinstance(x, float) else False)).any().any()
-    load = (load_data.applymap(lambda x: x > 0 if isinstance(x, float) else False)).any().any()
-    
-    if not generation and not load:
-        filtered_df = filtered_df.loc[filtered_df["Source"] == "Not specified"]"""
-    
-    
     filtered_df.sort_values(by = "Time", inplace = True)
     filtered_df.reset_index(inplace = True, drop = True)
     filtered_df.iloc[:, 1:6] = filtered_df.iloc[:, 1:6].astype(float)
-
     
     return filtered_df
 
-afrr_activation = get_afrr_activation_data(tf = one_day, afrr_directory = '../master-data/aFRR_activation/', direction = "Up")
+"""afrr_activation = get_afrr_activation_data(tf = one_day, afrr_directory = '../master-data/aFRR_activation/', direction = "Up")
 afrr_activation.columns
 afrr_activation[afrr_activation.columns[1:6]]
 #afrr_activation.to_csv("only_up_activations.csv")
 
 afrr_activation.iloc[:, 1:6] = afrr_activation.iloc[:, 1:6].astype(float)
 
-afrr_activation.columns
+afrr_activation.columns"""
 
 
 
