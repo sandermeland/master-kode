@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,16 +8,17 @@ from code_map import Inputs
 
 rand.seed(1337)
 
+@dataclass
 class PowerMeter:
-    def __init__(self, meter_id, response_time, up_flex_volume, down_flex_volume, direction, sleep_time, consumption_data, area):
-        self.response_time = response_time
-        self.direction = direction
-        self.sleep_time = sleep_time
-        self.consumption_data = consumption_data
-        self.meter_id = meter_id
-        self.area = area
-        self.up_flex_volume = up_flex_volume
-        self.down_flex_volume = down_flex_volume
+    meter_id: str # metering_point_id
+    response_time: int  # seconds
+    up_flex_volume: pd.DataFrame  # dataframe of available flex volume to be regulated up each hour [MW]
+    down_flex_volume: pd.DataFrame  # dataframe of available flex volume to be regulated down each hour [MW]
+    direction: str  # 'up', 'down', or 'both'
+    sleep_time: int  #  minutes the meter has to pause between each activation
+    consumption_data: pd.DataFrame # The actual consumption data for the meter
+    area: str # area of the metering point : NO1, NO2, NO3, NO4, NO5
+
         
 
 
