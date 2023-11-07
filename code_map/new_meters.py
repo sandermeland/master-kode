@@ -81,3 +81,10 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : Inputs.GlobalVari
         power_meters[meter_id] = meter
     return power_meters
 
+
+    """
+    
+    Når det kommer til response time hadde ikke kjartan noen innspill. Det kan være vanskelig å gjøre noe med kategorisering da vi ikke har oversikt over dette.
+    
+    Up/Down flex volume should be dependent of the same hour from previous same days of the week. Meaning that if we are looking at a monday at 12:00, we should look at all mondays at 12:00 and take the min/max of the values. This should be done for all hours in the timehorizone.
+    """
