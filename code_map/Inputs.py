@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import pandas as pd
 import os
 from zoneinfo import ZoneInfo
@@ -5,16 +6,16 @@ from functools import reduce
 
 import pytz
 
-class GlobalVariables():
-    def __init__(self, year,start_month, end_month, start_day, end_day, start_hour, end_hour, area): 
-        self.year = year
-        self.start_month = start_month
-        self.end_month = end_month
-        self.start_day = start_day
-        self.end_day = end_day
-        self.start_hour = start_hour
-        self.end_hour = end_hour
-        self.area = area
+@dataclass
+class GlobalVariables:
+    year : int
+    start_month : int 
+    end_month : int 
+    start_day : int 
+    end_day : int 
+    start_hour : int 
+    end_hour : int
+    
 
 
 one_hour = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 15, end_hour = 16, area = "NO5") # it may be possible to start from hour 14
@@ -58,6 +59,31 @@ def get_frequency_data(tf : GlobalVariables, freq_directory : str):
     
     return filtered_df
 
+def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe, markets):
+    """ Get a dictionary of the activation percentages for each market and hour
+
+    Args:
+        freq_df (pd.DataFrame): dataframe of the frequency data
+        timeframe (list): list of the wanted hours
+        markets (list): list of the markets
+
+    Returns:
+        dict: a dictionary of the activation percentages for each market and hour
+    """
+    
+    freq_dict = {}
+    for h, hour in enumerate(timeframe):
+        start_datetime = hour 
+        end_datetime = hour + pd.Timedelta(hours=1)
+        for m, market in enumerate(markets):
+            filtered_df = freq_df[(freq_df["Time"] >= start_datetime) & (freq_df["Time"] <= end_datetime)]
+            if "FCR_N" in market.name:
+                FCR_N_up_activation = filtered_df.loc[(filtered_df["Value"] > 49.9) & (filtered_df["Value"] < 50.0)]
+                FCR_N_down_activation = filtered_df.loc[(filtered_df["Value"] < 50.1) & (filtered_df["Value"] > 50.0)]
+                freq_dict[h,m] = (len(FCR_N_up_activation)/len(filtered_df), len(FCR_N_down_activation)/len(filtered_df))
+            else:
+                freq_dict[h,m] = (0,0)
+    return freq_dict
 
 #freq_df = get_frequency_data(tf = one_day, freq_directory = '../master-data/frequency_data/2023-06')
 #freq_df.head()
