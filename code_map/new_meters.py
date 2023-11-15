@@ -47,6 +47,10 @@ def preprocess_df(df, tf : Inputs.GlobalVariables):
     df["value"] = df["value"] * 0.001 # convert from KWh to MWh
     return df
 
+
+
+
+
 def find_extreme_val_for_hour_in_month(df : pd.DataFrame, hour : pd.Timestamp, min : bool):
     """
     Find all values in the DataFrame corresponding to the same hour and day of the week as 'hour'.
@@ -115,47 +119,81 @@ def adjust_values_by_weekday_min(df_24h, reference_df):
     return df_with_mins
 
 # TEST THE FUNCTION ABOVE
-    
+"""consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
+
+monthly_df = preprocess_df(consumption_data, Inputs.one_month)
+monthly_df['day_of_week'] = monthly_df['Time(Local)'].dt.day_name().astype('category')
+monthly_df['hour'] = monthly_df['Time(Local)'].dt.hour
+
+# Compute min and max values
+grouped = monthly_df.groupby(['metering_point_id', 'day_of_week', 'hour'])
+aggregates = grouped['value'].agg(['min', 'max']).reset_index()
+
+# Create dictionary for fast lookup
+lookup_dict = {(row['metering_point_id'], row['day_of_week'], row['hour']): (row['min'], row['max']) for index, row in aggregates.iterrows()}
+
+test_meter = consumption_data["metering_point_id"].iloc[0]
+
+test_hour = monthly_df["Time(Local)"].iloc[110]
+
+test_hour
+
+
+type(lookup_dict[(test_meter, test_hour.strftime('%A'), 0)][0])"""
 
 
 def create_meter_objects(consumption_data : pd.DataFrame ,tf : Inputs.GlobalVariables ):
     power_meters = {}
     updated_df = preprocess_df(consumption_data, tf)
     monthly_df = preprocess_df(consumption_data, Inputs.one_month)
+    monthly_df['day_of_week'] = monthly_df['Time(Local)'].dt.day_name().astype('category')
+    monthly_df['hour'] = monthly_df['Time(Local)'].dt.hour
+
+    # Compute min and max values
+    grouped = monthly_df.groupby(['metering_point_id', 'day_of_week', 'hour'])
+    aggregates = grouped['value'].agg(['min', 'max']).reset_index()
+
+    # Create dictionary for fast lookup
+    lookup_dict = {(row['metering_point_id'], row['day_of_week'], row['hour']): (row['min'], row['max']) for index, row in aggregates.iterrows()}
+
 
     for counter, meter_id in enumerate(updated_df["metering_point_id"].unique()):
-        meter_values = updated_df.loc[(updated_df["metering_point_id"] == meter_id)]
-        meter_values = meter_values.drop(columns = "metering_point_id")
-        #flex_volume = meter_values.copy()
-        #flex_volume["value"] = flex_volume["value"]*0.5
-        
-        directions = ["up", "down", "both"]
-        direction_index = rand.randint(0,2) if counter % 5 == 0 else 2
-        area = updated_df['area'].loc[(updated_df["metering_point_id"] == meter_id)].iloc[0]
-        # response time = mean of the flex_volume divided by the max consumption in the dataset for that meter times a value
-        if direction_index == 0: # up
-            up_flex_volume = meter_values.copy()
+        if meter_id in monthly_df["metering_point_id"].unique():
+            meter_values = updated_df.loc[(updated_df["metering_point_id"] == meter_id)]
+            meter_values = meter_values.drop(columns = "metering_point_id")
+            #flex_volume = meter_values.copy()
+            #flex_volume["value"] = flex_volume["value"]*0.5
             
-            for hour in up_flex_volume["Time(Local)"]:
-                up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] =  up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] - find_extreme_val_for_hour_in_month(monthly_df, hour, min = True)
-            
-            meter = PowerMeter(meter_id = meter_id, response_time = rand.random()*300, up_flex_volume= up_flex_volume , down_flex_volume = [], direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
-        
-        elif direction_index == 1:
-            down_flex_volume = meter_values.copy()
-            for hour in down_flex_volume["Time(Local)"]:
-                down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour] =  find_extreme_val_for_hour_in_month(monthly_df, hour, min = False) - down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour]
-            meter = PowerMeter(meter_id = meter_id, response_time = rand.random()*300, up_flex_volume= [] , down_flex_volume = down_flex_volume, direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
-        else:
-            up_flex_volume = meter_values.copy()
-            down_flex_volume = meter_values.copy()
-            for hour in up_flex_volume["Time(Local)"]:
-                up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] =  up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] - find_extreme_val_for_hour_in_month(monthly_df, hour, min = True)
-                down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour] =  find_extreme_val_for_hour_in_month(monthly_df, hour, min = False) - down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour]
-           
-            meter = PowerMeter(meter_id = meter_id, response_time = rand.random()*300, up_flex_volume= up_flex_volume , down_flex_volume = down_flex_volume, direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+            directions = ["up", "down", "both"]
+            direction_index = rand.randint(0,2) if counter % 5 == 0 else 2
+            area = updated_df['area'].loc[(updated_df["metering_point_id"] == meter_id)].iloc[0]
+            # response time = mean of the flex_volume divided by the max consumption in the dataset for that meter times a value
+            if direction_index == 0: # up
+                up_flex_volume = meter_values.copy()
+                
+                for hour in up_flex_volume["Time(Local)"]:
+                    up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] =  up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] - lookup_dict[(meter_id, hour.strftime('%A'), hour.hour)][0]
 
-        power_meters[meter_id] = meter
+                
+                meter = PowerMeter(meter_id = meter_id, response_time = rand.random()*300, up_flex_volume= up_flex_volume , down_flex_volume = [], direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+            
+            elif direction_index == 1:
+                down_flex_volume = meter_values.copy()
+                for hour in down_flex_volume["Time(Local)"]:
+                    down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour] =  lookup_dict[(meter_id, hour.strftime('%A'), hour.hour)][1] - down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour]
+                meter = PowerMeter(meter_id = meter_id, response_time = rand.random()*300, up_flex_volume= [] , down_flex_volume = down_flex_volume, direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+            else:
+                up_flex_volume = meter_values.copy()
+                down_flex_volume = meter_values.copy()
+                for hour in up_flex_volume["Time(Local)"]:
+                    up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] =  up_flex_volume["value"].loc[up_flex_volume["Time(Local)"] == hour] - lookup_dict[(meter_id, hour.strftime('%A'), hour.hour)][0]
+                    down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour] =  lookup_dict[(meter_id, hour.strftime('%A'), hour.hour)][1] - down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour]
+            
+                meter = PowerMeter(meter_id = meter_id, response_time = rand.random()*300, up_flex_volume= up_flex_volume , down_flex_volume = down_flex_volume, direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+
+            power_meters[meter_id] = meter
+        else:
+            continue
     return power_meters
 
 
