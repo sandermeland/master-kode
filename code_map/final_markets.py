@@ -321,8 +321,8 @@ def create_rk_markets(spot_path :str, price_down_path : str, price_up_path : str
 
     for rk_dict, area in zip(rk_dicts, areas):
         
-        RK_up_markets.append(ReserveMarket(name = "RK_up_" + area, direction = "up", area = area, capacity_market= False, response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, price_data= rk_dict["price_up"], volume_data= rk_dict["volume_up"]))
-        RK_down_markets.append(ReserveMarket(name = "RK_down_" + area, direction = "down", area = area, response_time=300, capacity_market=False,  duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, price_data= rk_dict["price_down"], volume_data= rk_dict["volume_down"]))
+        RK_up_markets.append(ReserveMarket(name = "RK_up_" + area, direction = "up", area = area, capacity_market= False, response_time=60*15, duration = 60, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time=0,activation_threshold=0, price_data= rk_dict["price_up"], volume_data= rk_dict["volume_up"]))
+        RK_down_markets.append(ReserveMarket(name = "RK_down_" + area, direction = "down", area = area, response_time=60*15, capacity_market=False,  duration = 60, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time=0,activation_threshold=0, price_data= rk_dict["price_down"], volume_data= rk_dict["volume_down"]))
     return RK_up_markets, RK_down_markets
 
 
@@ -422,17 +422,18 @@ def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_mont
     RKOM_B_down_markets = []
 
     for df, area in zip(rkom_dfs, areas):
-        RKOM_H_up_markets.append(ReserveMarket(name = "RKOM_H_up_" + area, direction = "up", area = area, response_time = 300, duration = 60*4, min_volume = 10, sleep_time= 60, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-H Price down"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume down"])))
+        
+        RKOM_H_up_markets.append(ReserveMarket(name = "RKOM_H_up_" + area, direction = "up", area = area, response_time = 300, duration = 60*4, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time= 60, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-H Price down"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume down"])))
 
-        RKOM_H_down_markets.append(ReserveMarket(name = "RKOM_H_down_" + area, direction = "down",area = area, response_time = 300, duration = 60*4, min_volume = 10, sleep_time= 60, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-H Price up"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume up"])))
+        RKOM_H_down_markets.append(ReserveMarket(name = "RKOM_H_down_" + area, direction = "down",area = area, response_time = 300, duration = 60*4, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time= 60, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-H Price up"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume up"])))
 
-        RKOM_B_up_markets.append(ReserveMarket(name = "RKOM_B_up_" + area, direction = "up",area = area, response_time = 300, duration = 60, min_volume = 10, sleep_time= 60*8, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price down"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume down"])))
+        RKOM_B_up_markets.append(ReserveMarket(name = "RKOM_B_up_" + area, direction = "up",area = area, response_time = 300, duration = 60, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time= 60*8, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price down"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume down"])))
 
-        RKOM_B_down_markets.append(ReserveMarket(name = "RKOM_B_down_" + area, direction = "down", area = area,response_time = 300, duration = 60, min_volume = 10, sleep_time = 60*8, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume up"])))
-    
+        RKOM_B_down_markets.append(ReserveMarket(name = "RKOM_B_down_" + area, direction = "down", area = area,response_time = 300, duration = 60, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time = 60*8, capacity_market = True, price_data= df.drop(columns = ["RKOM-H Volume up", "RKOM-H Volume down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up"]), volume_data= df.drop(columns = ["RKOM-H Price up", "RKOM-H Price down", "RKOM-B Price up", "RKOM-B Price down", "RKOM-B Volume up", "RKOM-B Volume down", "RKOM-H Volume up"])))
+        
     return RKOM_H_up_markets, RKOM_H_down_markets, RKOM_B_up_markets, RKOM_B_down_markets
 
-
+# Stig Ødegaard Ottesen mente det ikke var noe problem å bruke 1 MW for 
 #________________________________________RKOM SESONG_____________________________________________
 #RKOM_sesong = ReserveMarket(name = "RKOM_sesong", response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, capacity_market= True, opening_date= datetime.datetime.strptime("2022-W44" + '-1', "%Y-W%W-%w"), end_date= datetime.datetime.strptime("2022-W17" + '-1', "%Y-W%W-%w"))
 
