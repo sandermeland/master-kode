@@ -173,3 +173,5 @@ def get_timestamps(tf : GlobalVariables):
     timestamps = pd.date_range(start = start_datetime, end = end_datetime, freq = 'H', tz = "Europe/Oslo")
     return timestamps
 
+
+
