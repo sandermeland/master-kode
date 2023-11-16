@@ -243,6 +243,12 @@ def create_afrr_dfs(up_df, down_df, year, start_month, start_day, start_hour, en
     return aFRR_up_markets, aFRR_down_markets
 #___________________________________RK_________________________________________
 
+rk_price_down_path = "../master-data/markets-data/RK/new_rk_price_down.csv"
+rk_price_up_path = "../master-data/markets-data/RK/new_rk_price_up.csv"
+rk_volume_up_path = "../master-data/markets-data/RK/new_rk_vol_up.csv"
+rk_volume_down_path = "../master-data/markets-data/RK/new_rk_vol_down.csv"
+
+
 def initialize_rk_data(price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str):
     rk_price_down = pd.read_csv(price_down_path)
     rk_price_up = pd.read_csv(price_up_path)
@@ -254,38 +260,65 @@ def initialize_rk_data(price_down_path : str, price_up_path : str, volume_down_p
 
     return {"price_down" : rk_price_down,"price_up" : rk_price_up,"volume_up" : rk_volume_up,"volume_down" : rk_volume_down}
 
+def preprocess_spot_data(df : pd.DataFrame, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_day : int):
+    start_date = pd.Timestamp(year, start_month, start_day, start_hour).tz_localize('Europe/Oslo')
+    end_date = pd.Timestamp(year, end_month, end_day, end_hour).tz_localize('Europe/Oslo')
+   
+    df["start_time"] = pd.to_datetime(df["start_time"])
+ 
+    df["start_time"] = df["start_time"].dt.tz_convert('Europe/Oslo')
+   
+    df = df.loc[(df["start_time"] >= start_date) & (df["start_time"] <= end_date)]
+    df.rename(columns={'start_time':'Time(Local)'}, inplace=True)
+    df.sort_values(by=['Time(Local)', "delivery_area"], inplace=True)
+    # remove duplicates
+    df.drop_duplicates(subset=['Time(Local)', "delivery_area", "settlement"], inplace=True)
+    return df
 
-def preprocess_rk_dfs_dict(df_dict : dict, area : str, start_month : int, start_year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_year : int, end_day : int):
+def preprocess_rk_dfs_dict(df_dict : dict, area : str, start_month : int, start_year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_year : int, end_day : int, spot_path):
     start_datetime = pd.Timestamp(year = start_year, month= start_month, day=start_day, hour= start_hour, tz = "Europe/Oslo") #Europe/Oslo    
     end_datetime = pd.Timestamp(year = end_year, month= end_month, day=end_day, hour= end_hour, tz = "Europe/Oslo")
     updated_df_dict = {}
+    spot_df = pd.read_csv(spot_path)
+    updated_spot_df = preprocess_spot_data(spot_df, year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour)
+
     for name in df_dict.keys():
         df = df_dict[name].copy()
         if name == "volume_down":
+            # change from egative values to positive values
             df["value"].loc[df["value"] != 0] = df["value"].loc[df["value"] != 0] * -1
-        #df.drop(columns = ["end_time", "bi_created", "start_year" ], inplace = True)
         df["start_time"] = pd.to_datetime(df["start_time"], format="%Y-%m-%d %H:%M:%S")
-        #df["start_time"] = df["start_time"].dt.tz_localize("UTC")
         df["start_time"] = df["start_time"].dt.tz_convert("Europe/Oslo")
         df.sort_values(by = ["start_time", "delivery_area"], inplace = True)
         df.rename(columns = {"start_time" : "Time(Local)"}, inplace = True)
         filtered_df = df[(df["Time(Local)"] >= start_datetime) & (df["Time(Local)"] <= end_datetime) & (df["delivery_area"] == area)]
         filtered_df.sort_values(by = ["Time(Local)"], inplace = True)
+        if name == "price_down" :
+            filtered_df["value"] = filtered_df["value"] - updated_spot_df["settlement"]
+        if name == "price_up":
+            filtered_df["value"] = updated_spot_df["settlement"] - filtered_df["value"] 
+        
         updated_df_dict[name] = filtered_df
         
     return updated_df_dict
 
-def create_rk_markets(price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int,  end_day : int):
+
+
+
+def create_rk_markets(spot_path :str, price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int,  end_day : int):
     rk_dfs_dict = initialize_rk_data(price_down_path, price_up_path, volume_down_path, volume_up_path)
     rk_dicts = []
     areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
+
     for area in areas:
-        rk_dicts.append(preprocess_rk_dfs_dict(rk_dfs_dict, area=area, start_year= year, end_year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour))
+        rk_dicts.append(preprocess_rk_dfs_dict(rk_dfs_dict, area=area, start_year= year, end_year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour, spot_path= spot_path))
 
     RK_up_markets = []
     RK_down_markets = []
+    
 
     for rk_dict, area in zip(rk_dicts, areas):
+        
         RK_up_markets.append(ReserveMarket(name = "RK_up_" + area, direction = "up", area = area, capacity_market= False, response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, price_data= rk_dict["price_up"], volume_data= rk_dict["volume_up"]))
         RK_down_markets.append(ReserveMarket(name = "RK_down_" + area, direction = "down", area = area, response_time=300, capacity_market=False,  duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, price_data= rk_dict["price_down"], volume_data= rk_dict["volume_down"]))
     return RK_up_markets, RK_down_markets
@@ -402,7 +435,7 @@ def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_mont
 #RKOM_sesong = ReserveMarket(name = "RKOM_sesong", response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, capacity_market= True, opening_date= datetime.datetime.strptime("2022-W44" + '-1', "%Y-W%W-%w"), end_date= datetime.datetime.strptime("2022-W17" + '-1', "%Y-W%W-%w"))
 
 #_________________________________________________________________________________________________
-def get_market_list(tf : Inputs.GlobalVariables, fcr_d_1_path : str,  fcr_d_2_path : str, afrr_up_directory : str, afrr_down_directory : str, rk_price_down_path : str, rk_price_up_path : str, rk_volume_down_path: str, rk_volume_up_path : str, rkom_22_path : str, rkom_23_path : str): 
+def get_market_list(tf : Inputs.GlobalVariables, spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : str, afrr_up_directory : str, afrr_down_directory : str, rk_price_down_path : str, rk_price_up_path : str, rk_volume_down_path: str, rk_volume_up_path : str, rkom_22_path : str, rkom_23_path : str): 
     """Function to use all the functions defined in this file to create a list of all the markets that are to be used in the optimization problem.
 
     Args:
@@ -424,7 +457,7 @@ def get_market_list(tf : Inputs.GlobalVariables, fcr_d_1_path : str,  fcr_d_2_pa
     FFR_markets = create_FFR_markets(start_year= tf.year, start_month= tf.start_month, start_day = tf.start_day, end_year = tf.year, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour)
     FCR_D_1_D_markets, FCR_D_1_N_markets , FCR_D_2_N_markets , FCR_D_2_D_markets = create_FCR_dfs(fcr_d_1_path = fcr_d_1_path,  fcr_d_2_path = fcr_d_2_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour)
     aFRR_up_markets, aFRR_down_markets = create_afrr_dfs(up_df = afrr_up_directory, down_df = afrr_down_directory, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour)
-    RK_down_markets , RK_up_markets = create_rk_markets(price_down_path = rk_price_down_path, price_up_path = rk_price_up_path, volume_down_path= rk_volume_down_path, volume_up_path = rk_volume_up_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, start_hour = tf.start_hour, end_hour = tf.end_hour, end_month = tf.end_month, end_day = tf.end_day)
+    RK_down_markets , RK_up_markets = create_rk_markets(spot_path= spot_path, price_down_path = rk_price_down_path, price_up_path = rk_price_up_path, volume_down_path= rk_volume_down_path, volume_up_path = rk_volume_up_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, start_hour = tf.start_hour, end_hour = tf.end_hour, end_month = tf.end_month, end_day = tf.end_day)
     RKOM_B_down_markets, RKOM_B_up_markets, RKOM_H_down_markets, RKOM_H_up_markets = create_RKOM_markets(rkom_22_path = rkom_22_path, rkom_23_path = rkom_23_path, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour)
     all_market_list = FFR_markets + FCR_D_1_D_markets + FCR_D_1_N_markets + FCR_D_2_N_markets + FCR_D_2_D_markets + aFRR_up_markets + aFRR_down_markets + RK_down_markets + RK_up_markets + RKOM_B_down_markets + RKOM_B_up_markets + RKOM_H_down_markets + RKOM_H_up_markets
 

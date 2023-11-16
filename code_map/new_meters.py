@@ -23,27 +23,33 @@ class PowerMeter:
 
 
 
-def preprocess_df(df, tf : Inputs.GlobalVariables):
+def preprocess_consumption_df(df, tf : Inputs.GlobalVariables):
+    """ Function to preprocess the consumption data for a given time frame
+
+    Args:
+        df (pd.DataFrame): The unprocessed consumption data
+        tf (Inputs.GlobalVariables): The wanted timeframe
+    
+    Returns:
+        df (pd.DataFrame): The processed consumption data for the given timeframe
+    """
     start_date = pd.Timestamp(tf.year, tf.start_month, tf.start_day, tf.start_hour).tz_localize('Europe/Oslo')
     end_date = pd.Timestamp(tf.year, tf.end_month, tf.end_day, tf.end_hour).tz_localize('Europe/Oslo')
+   
     df["start_time_local"] = pd.to_datetime(df["start_time_local"])
-    #print(df["start_time_local"])
+ 
     df["start_time_local"] = df["start_time_local"].dt.tz_convert('Europe/Oslo')
-    #print(df["start_time_local"])
+   
     df = df.loc[(df["start_time_local"] >= start_date) & (df["start_time_local"] <= end_date)]
-   # print(df["start_time_local"])
+   
     hours_in_timehorizone = (end_date - start_date).days*24 + (end_date - start_date).seconds/3600
-    #print(hours_in_timehorizone)
-    # for eac metering_point_id, check if there is data for the whole timehorizone
+    
     count_hours_df = df.groupby("metering_point_id")["value"].agg(["count"])
-   # print(count_hours_df)
     missing_hours_df = count_hours_df.loc[(count_hours_df["count"] < hours_in_timehorizone)]
     new_meter_ids = missing_hours_df.index.tolist()
     df = df[(~df["metering_point_id"].isin(new_meter_ids))]
-    #print(df)
     
     df.rename(columns={'start_time_local':'Time(Local)'}, inplace=True)
-    #df.drop(columns = ["end_time_local"], inplace = True)
     df["value"] = df["value"] * 0.001 # convert from KWh to MWh
     return df
 
@@ -144,8 +150,8 @@ type(lookup_dict[(test_meter, test_hour.strftime('%A'), 0)][0])"""
 
 def create_meter_objects(consumption_data : pd.DataFrame ,tf : Inputs.GlobalVariables ):
     power_meters = {}
-    updated_df = preprocess_df(consumption_data, tf)
-    monthly_df = preprocess_df(consumption_data, Inputs.one_month)
+    updated_df = preprocess_consumption_df(consumption_data, tf)
+    monthly_df = preprocess_consumption_df(consumption_data, Inputs.one_month)
     monthly_df['day_of_week'] = monthly_df['Time(Local)'].dt.day_name().astype('category')
     monthly_df['hour'] = monthly_df['Time(Local)'].dt.hour
 
