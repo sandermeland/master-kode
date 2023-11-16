@@ -149,11 +149,11 @@ def create_FCR_dfs(fcr_d_1_path, fcr_d_2_path, start_month, year, start_day, end
 
     for df, area in zip(fcr_d_1_dfs, areas):
         FCR_D_1_D_markets.append(ReserveMarket(name = "FCR_D_D_1_" + area, direction = "up", area = area, response_time= 30, duration=15, min_volume=1, sleep_time= 60, activation_threshold= 49.9, price_data= df.drop(columns = ["FCR-N Price EUR/MW", "FCR-N Volume MW", "FCR-D Volume MW", "Area"]), volume_data= df.drop(columns = ["FCR-N Price EUR/MW", "FCR-N Volume MW", "FCR-D Price EUR/MW", "Area"])))
-        FCR_D_1_N_markets.append(ReserveMarket(name = "FCR_N_D_1_" + area, direction = "both", area = area, response_time= 30, duration= 15, min_volume=1, sleep_time=60, activation_threshold= 50, price_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Volume MW", "Area"]), volume_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Price EUR/MW", "Area" ])))
+        FCR_D_1_N_markets.append(ReserveMarket(name = "FCR_N_D_1_" + area, direction = "both", area = area, response_time= 150, duration= 15, min_volume=1, sleep_time=60, activation_threshold= 50, price_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Volume MW", "Area"]), volume_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Price EUR/MW", "Area" ])))
 
     for df, area in zip(fcr_d_2_dfs, areas):
         FCR_D_2_D_markets.append(ReserveMarket(name = "FCR_D_D_2_" + area, direction = "up", area = area, response_time= 30, duration=15, min_volume=1, sleep_time= 60, activation_threshold= 49.9, price_data= df.drop(columns = ["FCR-N Price EUR/MW", "FCR-N Volume MW","FCR-D Volume MW", "Area"]), volume_data= df.drop(columns = ["FCR-N Price EUR/MW", "FCR-N Volume MW","FCR-D Price EUR/MW" , "Area"])))
-        FCR_D_2_N_markets.append(ReserveMarket(name = "FCR_N_D_2_" + area, direction = "both", area = area, response_time= 30, duration= 15, min_volume=1, sleep_time=60, activation_threshold= 50, price_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Volume MW", "Area"]), volume_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Price EUR/MW" , "Area"])))
+        FCR_D_2_N_markets.append(ReserveMarket(name = "FCR_N_D_2_" + area, direction = "both", area = area, response_time= 150, duration= 15, min_volume=1, sleep_time=60, activation_threshold= 50, price_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Volume MW", "Area"]), volume_data= df.drop(columns = ["FCR-D Price EUR/MW", "FCR-D Volume MW","FCR-N Price EUR/MW" , "Area"])))
 
     return FCR_D_1_D_markets, FCR_D_2_D_markets, FCR_D_1_N_markets, FCR_D_2_N_markets
 
