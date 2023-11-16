@@ -147,7 +147,7 @@ test_hour
 
 type(lookup_dict[(test_meter, test_hour.strftime('%A'), 0)][0])"""
 
-
+# SØO - does it make sense to have have down flex volume as there only are consumption meters?
 def create_meter_objects(consumption_data : pd.DataFrame ,tf : Inputs.GlobalVariables ):
     power_meters = {}
     updated_df = preprocess_consumption_df(consumption_data, tf)
