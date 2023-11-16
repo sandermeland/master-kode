@@ -43,14 +43,14 @@ class ReserveMarket:
 
 
 #________________________________Global variables____________________________________
-version_variables = Inputs.one_day
+"""version_variables = Inputs.one_day
 year = version_variables.year
 start_month = version_variables.start_month
 end_month = version_variables.end_month
 start_day = version_variables.start_day
 end_day = version_variables.end_day
 start_hour = version_variables.start_hour
-end_hour = version_variables.end_hour
+end_hour = version_variables.end_hour"""
 #area = version_variables.area
 areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
 #___________________________________FFR_______________________________________
@@ -243,11 +243,11 @@ def create_afrr_dfs(up_df, down_df, year, start_month, start_day, start_hour, en
     return aFRR_up_markets, aFRR_down_markets
 #___________________________________RK_________________________________________
 
-rk_price_down_path = "../master-data/markets-data/RK/new_rk_price_down.csv"
+"""rk_price_down_path = "../master-data/markets-data/RK/new_rk_price_down.csv"
 rk_price_up_path = "../master-data/markets-data/RK/new_rk_price_up.csv"
 rk_volume_up_path = "../master-data/markets-data/RK/new_rk_vol_up.csv"
 rk_volume_down_path = "../master-data/markets-data/RK/new_rk_vol_down.csv"
-
+spot_path = "../master-data/spot_data/spot_june_23.csv"""
 
 def initialize_rk_data(price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str):
     rk_price_down = pd.read_csv(price_down_path)
@@ -260,7 +260,7 @@ def initialize_rk_data(price_down_path : str, price_up_path : str, volume_down_p
 
     return {"price_down" : rk_price_down,"price_up" : rk_price_up,"volume_up" : rk_volume_up,"volume_down" : rk_volume_down}
 
-def preprocess_spot_data(df : pd.DataFrame, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_day : int):
+def preprocess_spot_data(df : pd.DataFrame, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_day : int, area : str):
     start_date = pd.Timestamp(year, start_month, start_day, start_hour).tz_localize('Europe/Oslo')
     end_date = pd.Timestamp(year, end_month, end_day, end_hour).tz_localize('Europe/Oslo')
    
@@ -273,15 +273,15 @@ def preprocess_spot_data(df : pd.DataFrame, start_month : int, year : int, start
     df.sort_values(by=['Time(Local)', "delivery_area"], inplace=True)
     # remove duplicates
     df.drop_duplicates(subset=['Time(Local)', "delivery_area", "settlement"], inplace=True)
-    return df
+    return df.loc[df["delivery_area"] == area].reset_index(drop=True)
 
-def preprocess_rk_dfs_dict(df_dict : dict, area : str, start_month : int, start_year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_year : int, end_day : int, spot_path):
-    start_datetime = pd.Timestamp(year = start_year, month= start_month, day=start_day, hour= start_hour, tz = "Europe/Oslo") #Europe/Oslo    
+def preprocess_rk_dfs_dict(df_dict : dict, area : str, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_year : int, end_day : int, spot_path):
+    start_datetime = pd.Timestamp(year = year, month= start_month, day=start_day, hour= start_hour, tz = "Europe/Oslo") #Europe/Oslo    
     end_datetime = pd.Timestamp(year = end_year, month= end_month, day=end_day, hour= end_hour, tz = "Europe/Oslo")
     updated_df_dict = {}
     spot_df = pd.read_csv(spot_path)
-    updated_spot_df = preprocess_spot_data(spot_df, year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour)
-
+    updated_spot_df = preprocess_spot_data(spot_df, year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour, area = area)
+    #print(updated_spot_df)
     for name in df_dict.keys():
         df = df_dict[name].copy()
         if name == "volume_down":
@@ -293,25 +293,27 @@ def preprocess_rk_dfs_dict(df_dict : dict, area : str, start_month : int, start_
         df.rename(columns = {"start_time" : "Time(Local)"}, inplace = True)
         filtered_df = df[(df["Time(Local)"] >= start_datetime) & (df["Time(Local)"] <= end_datetime) & (df["delivery_area"] == area)]
         filtered_df.sort_values(by = ["Time(Local)"], inplace = True)
-        if name == "price_down" :
-            filtered_df["value"] = filtered_df["value"] - updated_spot_df["settlement"]
-        if name == "price_up":
-            filtered_df["value"] = updated_spot_df["settlement"] - filtered_df["value"] 
+        if name == "price_up" :
+            filtered_df["value"] = np.float64(filtered_df["value"]) - np.float64(updated_spot_df["settlement"]) 
+        if name == "price_down":
+            filtered_df["value"] = np.float64(updated_spot_df["settlement"]) - np.float64(filtered_df["value"])
         
         updated_df_dict[name] = filtered_df
         
     return updated_df_dict
 
 
+"""rk_dfs_dict = preprocess_rk_dfs_dict(initialize_rk_data(rk_price_down_path, rk_price_up_path, rk_volume_down_path, rk_volume_up_path), area = "NO1", start_month = start_month, year = year, start_day = start_day, start_hour = start_hour, end_hour = end_hour, end_month = end_month, end_year = year, end_day = end_day, spot_path = spot_path)
 
+rk_dfs_dict["price_down"]"""
 
 def create_rk_markets(spot_path :str, price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int,  end_day : int):
-    rk_dfs_dict = initialize_rk_data(price_down_path, price_up_path, volume_down_path, volume_up_path)
+    rk_dfs_dict = initialize_rk_data(price_down_path = price_down_path, price_up_path = price_up_path, volume_down_path = volume_down_path, volume_up_path = volume_up_path)
     rk_dicts = []
     areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
 
     for area in areas:
-        rk_dicts.append(preprocess_rk_dfs_dict(rk_dfs_dict, area=area, start_year= year, end_year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour, spot_path= spot_path))
+        rk_dicts.append(preprocess_rk_dfs_dict(df_dict=rk_dfs_dict, area=area, year= year, end_year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour, spot_path= spot_path))
 
     RK_up_markets = []
     RK_down_markets = []
