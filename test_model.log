@@ -352,3 +352,57 @@ Solution count 4: 3117.56 3074.45 3035.18 -0
 
 Optimal solution found (tolerance 1.00e-04)
 Best objective 3.117562476061e+03, best bound 3.117562476061e+03, gap 0.0000%
+
+Gurobi 10.0.3 (mac64[rosetta2]) logging started Sat Nov 18 10:55:01 2023
+
+Set parameter LogFile to value "test_model.log"
+Gurobi Optimizer version 10.0.3 build v10.0.3rc0 (mac64[rosetta2])
+
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+Optimize a model with 6571464 rows, 3260208 columns and 16836696 nonzeros
+Model fingerprint: 0xdd528c4b
+Model has 155300 quadratic objective terms
+Model has 1488 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+  Matrix range     [1e-06, 1e+03]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [2e-06, 6e+01]
+  QObjective range [1e-06, 8e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [2e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Presolve removed 6497221 rows and 1328004 columns (presolve time = 5s) ...
+Presolve removed 6512838 rows and 1718350 columns (presolve time = 10s) ...
+Presolve removed 6524309 rows and 3225442 columns (presolve time = 15s) ...
+Presolve removed 6539550 rows and 3238002 columns (presolve time = 20s) ...
+Presolve removed 6569604 rows and 3258804 columns
+Presolve time: 24.04s
+Presolved: 1860 rows, 1404 columns, 5604 nonzeros
+Found heuristic solution: objective 3163.0482592
+Variable types: 0 continuous, 1404 integer (1404 binary)
+Found heuristic solution: objective 3256.6139392
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.2748230e+03   2.880000e+02   0.000000e+00     28s
+       1    3.2748230e+03   0.000000e+00   0.000000e+00     28s
+
+Root relaxation: objective 3.274823e+03, 1 iterations, 0.01 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    3274.8229992 3274.82300  0.00%     -   28s
+
+Explored 1 nodes (1 simplex iterations) in 30.40 seconds (20.03 work units)
+Thread count was 8 (of 8 available processors)
+
+Solution count 4: 3274.82 3256.61 3163.05 -0 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 3.274822999228e+03, best bound 3.274822999228e+03, gap 0.0000%

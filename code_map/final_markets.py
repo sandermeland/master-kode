@@ -382,6 +382,8 @@ def create_standardized_RKOM_df(rkom_22_path : str, rkom_23_path : str, year, ar
     std_df = pd.DataFrame(np.zeros((len(date_horizon), 9)), columns= ["Time(Local)", "RKOM-H Price up", "RKOM-H Volume up", "RKOM-B Price up", "RKOM-B Volume up", "RKOM-H Price down", "RKOM-H Volume down", "RKOM-B Price down", "RKOM-B Volume down"])
     std_df["Time(Local)"] = date_horizon
     #print(date_horizon)
+    
+    NOK_EUR = 0.085
     for date in std_df["Time(Local)"]:
         month = date.month
         day = date.day
@@ -390,22 +392,22 @@ def create_standardized_RKOM_df(rkom_22_path : str, rkom_23_path : str, year, ar
         hour_val = get_hour_val_area_df(df, area, month, day, hour) 
         #print(hour_val)
         if date.weekday() < 5:
-            std_df["RKOM-H Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekday"].iloc[0] * 0.085
+            std_df["RKOM-H Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekday"].iloc[0] * NOK_EUR # 0.085 for NOK to EUR
             std_df["RKOM-H Volume up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Volume Weekday"].iloc[0]
-            std_df["RKOM-B Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekday"].iloc[0] * 0.085
+            std_df["RKOM-B Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekday"].iloc[0] * NOK_EUR
             std_df["RKOM-B Volume up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Volume Weekday"].iloc[0]
-            std_df["RKOM-H Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekday"].iloc[1] * 0.085
+            std_df["RKOM-H Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekday"].iloc[1] * NOK_EUR
             std_df["RKOM-H Volume down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Volume Weekday"].iloc[1]
-            std_df["RKOM-B Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekday"].iloc[1] * 0.085
+            std_df["RKOM-B Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekday"].iloc[1] * NOK_EUR
             std_df["RKOM-B Volume down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Volume Weekday"].iloc[1]
         else:
-            std_df["RKOM-H Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekend"].iloc[0] * 0.085
+            std_df["RKOM-H Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekend"].iloc[0] * NOK_EUR
             std_df["RKOM-H Volume up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Volume Weekend"].iloc[0]
-            std_df["RKOM-B Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekend"].iloc[0] * 0.085
+            std_df["RKOM-B Price up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekend"].iloc[0] * NOK_EUR
             std_df["RKOM-B Volume up"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Volume Weekend"].iloc[0]
-            std_df["RKOM-H Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekend"].iloc[1] * 0.085
+            std_df["RKOM-H Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Price Weekend"].iloc[1] * NOK_EUR
             std_df["RKOM-H Volume down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-H Volume Weekend"].iloc[1]
-            std_df["RKOM-B Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekend"].iloc[1] * 0.085
+            std_df["RKOM-B Price down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Price Weekend"].iloc[1] * NOK_EUR
             std_df["RKOM-B Volume down"][(std_df["Time(Local)"] == date)] = hour_val["RKOM-B Volume Weekend"].iloc[1]
     
     return std_df
@@ -433,7 +435,7 @@ def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_mont
         
     return RKOM_H_up_markets, RKOM_H_down_markets, RKOM_B_up_markets, RKOM_B_down_markets
 
-# Stig Ødegaard Ottesen mente det ikke var noe problem å bruke 1 MW for 
+# Stig Ødegaard Ottesen mente det ikke var noe problem å bruke 1 MW for RK
 #________________________________________RKOM SESONG_____________________________________________
 #RKOM_sesong = ReserveMarket(name = "RKOM_sesong", response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, capacity_market= True, opening_date= datetime.datetime.strptime("2022-W44" + '-1', "%Y-W%W-%w"), end_date= datetime.datetime.strptime("2022-W17" + '-1', "%Y-W%W-%w"))
 
@@ -443,6 +445,7 @@ def get_market_list(tf : Inputs.GlobalVariables, spot_path : str,  fcr_d_1_path 
 
     Args:
         tf (Inputs.GlobalVariables): the wanted timeframe for the optimization problem
+        spot_path (str): path to the spot data
         fcr_d_1_path (str): path to the FCR-D1 dataset
         fcr_d_2_path (str): path to the FCR-D2 dataset
         afrr_up_directory (str): path to the aFRR up datasets
