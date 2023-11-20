@@ -1,0 +1,23 @@
+
+Gurobi 10.0.3 (mac64[rosetta2]) logging started Mon Nov 20 14:35:25 2023
+
+Set parameter LogFile to value "weekly_test_model.log"
+Gurobi Optimizer version 10.0.3 build v10.0.3rc0 (mac64[rosetta2])
+
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+Optimize a model with 46000248 rows, 22821456 columns and 119474013 nonzeros
+Model fingerprint: 0x3e33968d
+Model has 1325708 quadratic objective terms
+Model has 10416 quadratic constraints
+Variable types: 0 continuous, 22821456 integer (22821456 binary)
+Coefficient statistics:
+  Matrix range     [1e-06, 1e+03]
+  QMatrix range    [1e-06, 9e-01]
+  Objective range  [1e-06, 5e+04]
+  QObjective range [3e-07, 5e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
