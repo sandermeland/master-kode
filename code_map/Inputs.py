@@ -22,6 +22,8 @@ one_hour = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_da
 
 one_day = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 0, end_hour = 23)
 
+one_week = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 19, end_day = 25, start_hour = 0, end_hour = 23)
+
 half_month =  GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 14, end_day = 30, start_hour = 0, end_hour = 23)
 
 one_month = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 1, end_day = 30, start_hour = 0, end_hour = 23)
