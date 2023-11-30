@@ -132,6 +132,7 @@ def preprocess_FCR(df: pd.DataFrame, start_month : int, year : int, start_day : 
     area_set = set(['NO1', 'NO2', 'NO3', 'NO4', 'NO5'])
     #print(len(filtered_df))
     #print(len(timeframe) * 5)
+    missing_rows = []
     if len(filtered_df) < len(timeframe) * 5:
         for hour in timeframe:
             if filtered_df.loc[filtered_df["Time(Local)"] == hour].shape[0] < 5:
@@ -140,9 +141,13 @@ def preprocess_FCR(df: pd.DataFrame, start_month : int, year : int, start_day : 
                 found_areas_set = set(found_areas)
                 #print(f"found_areas_set : {found_areas_set} ")
                 missing_area = area_set - found_areas_set
-                #print(f"missing_area : {missing_area}")
-                missing_row = pd.DataFrame([[hour, missing_area.pop() , 0, 0, 0, 0]], columns=filtered_df.columns)
-                filtered_df = filtered_df.append(missing_row, ignore_index=True)
+                for area in missing_area:
+                    #print(f"missing_area : {missing_area}")
+                    missing_row = pd.DataFrame([[hour, area , 0, 0, 0, 0]], columns=filtered_df.columns)
+                    missing_rows.append(missing_row)
+    if missing_rows:
+        missing_rows_df = pd.concat(missing_rows, ignore_index=True)
+        filtered_df = pd.concat([filtered_df, missing_rows_df], ignore_index=True)
     
     return filtered_df
 
@@ -342,8 +347,8 @@ def preprocess_rk_dfs_dict(df_dict : dict, area : str, start_month : int, year :
         if name == "volume_down":
             # change from egative values to positive values
             df["value"].loc[df["value"] != 0] = df["value"].loc[df["value"] != 0] * -1
-        df["start_time"] = pd.to_datetime(df["start_time"], format="%Y-%m-%d %H:%M:%S")
-        df["start_time"] = df["start_time"].dt.tz_convert("Europe/Oslo")
+        df["start_time"] = pd.to_datetime(df["start_time"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+        df["start_time"] = df["start_time"].dt.tz_localize("UTC").dt.tz_convert("Europe/Oslo")
         df.sort_values(by = ["start_time", "delivery_area"], inplace = True)
         df.rename(columns = {"start_time" : "Time(Local)"}, inplace = True)
         filtered_df = df[(df["Time(Local)"] >= start_datetime) & (df["Time(Local)"] <= end_datetime) & (df["delivery_area"] == area)]

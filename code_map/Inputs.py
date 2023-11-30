@@ -50,7 +50,8 @@ def get_frequency_data(tf : GlobalVariables, freq_directory : str):
         freq_dfs.append(data)
         
     freq_df = pd.concat(freq_dfs, ignore_index= True)
-    freq_df["Time"] = pd.to_datetime(freq_df["Time"], format = "%Y-%m-%d %H:%M:%S")
+    format = "%Y-%m-%d %H:%M:%S.%f"
+    freq_df["Time"] = pd.to_datetime(freq_df["Time"], format = format) 
     freq_df["Time"] = freq_df["Time"].dt.tz_localize("Europe/Oslo")
     start_datetime = pd.Timestamp(year = tf.year, month= tf.start_month, day=tf.start_day, hour= tf.start_hour, tz = "Europe/Oslo") #Europe/Oslo    
     end_datetime = pd.Timestamp(year = tf.year, month= tf.end_month, day=tf.end_day, hour= tf.end_hour, tz = "Europe/Oslo")
@@ -59,6 +60,10 @@ def get_frequency_data(tf : GlobalVariables, freq_directory : str):
     filtered_df.reset_index(inplace = True, drop = True)
     
     return filtered_df
+
+#freq_data = get_frequency_data(one_week, '../master-data/frequency_data/2023-06')
+
+#freq_data.head()
 
 def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe, markets):
     """ Get a dictionary of the activation percentages for each market and hour
