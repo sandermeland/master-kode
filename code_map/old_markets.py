@@ -5,7 +5,7 @@ import calendar
 from datetime import datetime
 import pytz
 import openpyxl
-from code_map import Inputs
+from code_map import Utils
 
 ## Tror det mest sannsynlig ikke er nødvendig med activation_threshold. Kan da også smekke sammen de 2 ffr markedene. Ankepunktet er eventuelt 
 ## Bør jeg ha med opp og ned?
@@ -49,7 +49,7 @@ class ReserveMarket_OLD:
         self.area = area
 
 #________________________________Global variables____________________________________
-version_variables = Inputs.version_3_variables
+version_variables = Utils.version_3_variables
 year = version_variables.year
 start_month = version_variables.start_month
 end_month = version_variables.end_month

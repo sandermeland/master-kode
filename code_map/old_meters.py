@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 import random as rand
-from code_map import Inputs
+from code_map import Utils
 
 
 class PowerMeter:
@@ -54,7 +54,7 @@ each_hour_count.to_csv("count.csv")"""
 
 
 
-def preprocess_df(df, version_variables : Inputs.GlobalVariables):
+def preprocess_df(df, version_variables : Utils.GlobalVariables):
     start_date = pd.Timestamp(version_variables.year, version_variables.start_month, version_variables.start_day, version_variables.start_hour).tz_localize('Europe/Oslo')
     end_date = pd.Timestamp(version_variables.year, version_variables.end_month, version_variables.end_day, version_variables.end_hour).tz_localize('Europe/Oslo')
     df["start_time_local"] = pd.to_datetime(df["start_time_local"])
@@ -78,7 +78,7 @@ def preprocess_df(df, version_variables : Inputs.GlobalVariables):
     df["value"] = df["value"] * 0.001 # convert from KWh to MWh
     return df
 
-updated_df = preprocess_df(consumption_data, Inputs.one_day)
+updated_df = preprocess_df(consumption_data, Utils.one_day)
 
 #len(updated_df["metering_point_id"].unique())
 

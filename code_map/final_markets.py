@@ -4,7 +4,7 @@ import calendar
 from datetime import datetime
 import pytz
 import openpyxl
-from code_map import Inputs
+#from code_map import Utils
 from dataclasses import dataclass
 
 
@@ -39,6 +39,8 @@ class ReserveMarket:
     sleep_time: int = 60  # minutes, default is 60
     activation_threshold: float = 0  # frequency, default is 0
     capacity_market: bool = True  # indicates if the market is a capacity market, default is True
+    #bid_deadline: str 
+    #bid_duration: float
 
 
 #________________________________Global variables____________________________________
@@ -500,7 +502,7 @@ def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_mont
 #RKOM_sesong = ReserveMarket(name = "RKOM_sesong", response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, capacity_market= True, opening_date= datetime.datetime.strptime("2022-W44" + '-1', "%Y-W%W-%w"), end_date= datetime.datetime.strptime("2022-W17" + '-1', "%Y-W%W-%w"))
 
 #_________________________________________________________________________________________________
-def get_market_list(tf : Inputs.GlobalVariables, spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : str, afrr_up_directory : str, afrr_down_directory : str, rk_price_down_path : str, rk_price_up_path : str, rk_volume_down_path: str, rk_volume_up_path : str, rkom_22_path : str, rkom_23_path : str): 
+def get_market_list(tf , spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : str, afrr_up_directory : str, afrr_down_directory : str, rk_price_down_path : str, rk_price_up_path : str, rk_volume_down_path: str, rk_volume_up_path : str, rkom_22_path : str, rkom_23_path : str): 
     """Function to use all the functions defined in this file to create a list of all the markets that are to be used in the optimization problem.
 
     Args:

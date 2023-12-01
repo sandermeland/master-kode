@@ -5,7 +5,7 @@ import calendar
 from datetime import datetime
 import pytz
 import openpyxl
-from code_map import Inputs
+from code_map import Utils
 
 ## Tror det mest sannsynlig ikke er nødvendig med activation_threshold. Kan da også smekke sammen de 2 ffr markedene. Ankepunktet er eventuelt 
 ## Bør jeg ha med opp og ned?
@@ -49,7 +49,7 @@ class ReserveMarket:
         self.area = area
 
 #________________________________Global variables____________________________________
-version_variables = Inputs.one_day
+version_variables = Utils.one_day
 year = version_variables.year
 start_month = version_variables.start_month
 end_month = version_variables.end_month
@@ -398,7 +398,7 @@ for df, area in zip(rkom_dfs, areas):
 #RKOM_sesong = ReserveMarket(name = "RKOM_sesong", response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, capacity_market= True, opening_date= datetime.datetime.strptime("2022-W44" + '-1', "%Y-W%W-%w"), end_date= datetime.datetime.strptime("2022-W17" + '-1', "%Y-W%W-%w"))
 
 #_________________________________________________________________________________________________
-def get_market_list(tf : Inputs.GlobalVariables):
+def get_market_list(tf : Utils.GlobalVariables):
     """Function to get all markets. Might be to stressfull to make this function. Will have to load all of the datasets in this function. It will be extremely long.
 
     Args:

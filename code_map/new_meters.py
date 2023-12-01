@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import random as rand
-from code_map import Inputs
+from code_map import Utils
 
 rand.seed(1337)
 
@@ -19,7 +19,7 @@ class PowerMeter:
     area: str # area of the metering point : NO1, NO2, NO3, NO4, NO5
 
         
-def preprocess_consumption_df(df, tf : Inputs.GlobalVariables):
+def preprocess_consumption_df(df, tf : Utils.GlobalVariables):
     """ Function to preprocess the consumption data for a given time frame
 
     Args:
@@ -65,7 +65,7 @@ def combine_category_dfs(list_of_paths : list):
 
 
 # SØO - does it make sense to have have down flex volume as there only are consumption meters?
-def create_meter_objects(consumption_data : pd.DataFrame ,tf : Inputs.GlobalVariables, reference_tf : Inputs.GlobalVariables, category_path_list : list ):
+def create_meter_objects(consumption_data : pd.DataFrame ,tf : Utils.GlobalVariables, reference_tf : Utils.GlobalVariables, category_path_list : list ):
     """
     Creates the meter objects from the consumption data. 
     The flex volume is calculated as the difference between the min/max value for the same hour and day of the week in the reference timeframe and the consumption data for the timeframe.
