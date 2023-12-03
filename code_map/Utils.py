@@ -183,6 +183,19 @@ def get_timestamps(tf : GlobalVariables):
 
 
 def get_all_sets(timeframe : GlobalVariables):
+    """ Function to get all the sets needed for the optimization problem
+
+    Args:
+        timeframe (GlobalVariables): the wanted timeframe where the data is wanted
+
+    Returns:
+        list: L which is a list of powermeter objects with the data for each meter within the timeframe
+        list : M which is a list of reservemarket objects with the data for each market within the timeframe
+        dict: F which is a dictionary of the activation percentages for each market and hour due to the frequency data
+        list: H which is a list of timestamps for the given timeframe
+        pd.DataFrame : freq_data which is a dataframe of the frequency data for the given timeframe
+        pd.DataFrame : dictionary of the powermeter's consumption data for each hour within the timeframe
+    """
     #FCR DIRECTORIES
     fcr_d_1_directory = "../master-data/markets-data/FCR_D-1-2023.xlsx"
     fcr_d_2_directory = "../master-data/markets-data/FCR_D-2-2023.xlsx"
@@ -224,6 +237,24 @@ def get_all_sets(timeframe : GlobalVariables):
     return L, M, F, H, freq_data, power_meter_dict, consumption_data
 
 def get_parameters(L,M,H):
+    """ function to return the sets needed for the optimization problem
+
+    Args:
+        L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+
+    Returns:
+        L_u (matrix(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe that have direction up or both
+        L_d (matrix(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe that have direction down or both
+        Fu_h_l (matrix(float)): The flex volume up for each hour and load
+        Fd_h_l (matrix(float)): The flex volume down for each hour and load
+        R_h_l (matrix(float)): The response time for each hour and load
+        P_h_m (matrix(float)): The price for each hour and market
+        Vp_h_m (matrix(float)): The volume for each hour and market
+        Vm_m (list(float)): The min volume for each market
+        R_m (list(float)): The response time for each market
+    """
     # make a list of only the meters that have direction up or both
     L_u = [meter for meter in L if meter.direction != 'down']
     L_d = [meter for meter in L if meter.direction != 'up']
@@ -260,6 +291,26 @@ def get_dominant_direction(freq_df : pd.DataFrame, hour : pd.Timestamp):
         return "down"
     
 def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m, Vp_h_m, F, markets_dict, timeframe):
+    """_summary_
+
+    Args:
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+        L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
+        dominant_directions (list(str)): list of the dominant direction for each hour
+        Fu_h_l (matrix(float)): The flex volume up for each hour and load
+        Fd_h_l (matrix(float)): The flex volume down for each hour and load
+        P_h_m (matrix(float)): The price for each hour and market
+        Vp_h_m (matrix(float)): The volume for each hour and market
+        F (pd.DataFrame): dictionary for frequency data
+        markets_dict (dict): dictionary of the markets
+        timeframe (GlobalVariables): GlobalVariables object which tells the timeframe
+
+    Returns:
+        Ir_hlm (matrix(float)): The income from the reserve markets for each hour, load, and market
+        Ia_hlm (matrix(float)): The income from the activation markets for each hour, load, and market
+        Va_hm (matrix(float)): The volume from the activation markets for each hour and market
+    """
     afrr_activation_up = get_afrr_activation_data(tf = timeframe, afrr_directory = '../master-data/aFRR_activation/', direction = "Up")
     afrr_activation_down = get_afrr_activation_data(tf = timeframe, afrr_directory = '../master-data/aFRR_activation/', direction = "Down")
     
@@ -343,10 +394,20 @@ def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m,
     return Ir_hlm, Ia_hlm, Va_hm
 
 def get_compatibility_list(H,L,M):
+    """ function to get a list of compatible markets for each hour and load
+
+    Args:
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+        L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+
+    Returns:
+        list: list of compatible markets for each hour and load
+    """
     compatible_list = []
     for _ in H:
         hour_list = []
-        for l, asset in enumerate(L):
+        for asset in L:
             asset_list = []
             for m, market in enumerate(M):
                 if asset.direction == "up":
@@ -366,7 +427,21 @@ def get_compatibility_list(H,L,M):
     return compatible_list
 
 
-def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F,):
+def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F):
+    """ function to test the validity of the solution provided by a solver
+
+    Args:
+        x (dict): dictionary of the binary variable which tells if an asset is connected to a market
+        y (dict): dictionary of the binary variable which tells if a market has any bids
+        w (dict): dictionary of the binary variable which tells if a market is activated
+        L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+        dominant_directions (list(str)): list of the dominant direction for each hour
+        F (pd.DataFrame): dictionary for frequency data
+    Returns:
+        str : a string that tells if the solution is valid. If not valid, the function will raise an error
+    """
     for h, hour in enumerate(H):
         for l, load in enumerate(L):
             # Each asset can only be connected to one market at a time
@@ -429,6 +504,19 @@ def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F,):
     return "Solution is valid"
 
 def get_market_count_dict(x, H, L, M, dominant_directions):
+    """ function to get a dictionary of the results of the optimization problem.
+        The solution is represented as a dataframe for each hour which tells how many assets and how much flex volume is connected to each market for each hour.
+
+    Args:
+        x (dict): dictionary of the binary variable which tells if an asset is connected to a market
+        L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+        dominant_directions (list(str)): list of the dominant direction for each hour
+
+    Returns:
+        dict: the solution of the optimization problem
+    """
     data = []
 
     for h, hour in enumerate(H):
