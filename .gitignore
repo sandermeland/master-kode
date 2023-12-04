@@ -1,8 +1,6 @@
 myenv/
-weekly_collections.pkl
-current_x_values.pkl
-not_in_use.zip
-half_month_collection.pkl
+*.zip
+*.pkl
 
 
 
