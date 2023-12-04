@@ -36,8 +36,7 @@ def get_frequency_data(tf : timeframes.TimeFrame, freq_directory : str):
     start_datetime = pd.Timestamp(year = tf.year, month= tf.start_month, day=tf.start_day, hour= tf.start_hour, tz = "Europe/Oslo") #Europe/Oslo    
     end_datetime = pd.Timestamp(year = tf.year, month= tf.end_month, day=tf.end_day, hour= tf.end_hour, tz = "Europe/Oslo")
     filtered_df = freq_df[(freq_df["Time"] >= start_datetime) & (freq_df["Time"] <= end_datetime)]
-    filtered_df.sort_values(by = "Time", inplace = True)
-    filtered_df.reset_index(inplace = True, drop = True)
+    filtered_df = filtered_df.sort_values(by = "Time").reset_index(drop = True) 
     
     return filtered_df
 
