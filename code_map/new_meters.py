@@ -19,12 +19,12 @@ class PowerMeter:
     area: str # area of the metering point : NO1, NO2, NO3, NO4, NO5
 
         
-def preprocess_consumption_df(df, tf : utils.GlobalVariables):
+def preprocess_consumption_df(df, tf : timeframes.TimeFrame):
     """ Function to preprocess the consumption data for a given time frame
 
     Args:
         df (pd.DataFrame): The unprocessed consumption data
-        tf (Inputs.GlobalVariables): The wanted timeframe
+        tf (timeframes.TimeFrame): The wanted timeframe
     
     Returns:
         df (pd.DataFrame): The processed consumption data for the given timeframe
@@ -65,7 +65,7 @@ def combine_category_dfs(list_of_paths : list):
 
 
 # SØO - does it make sense to have have down flex volume as there only are consumption meters?
-def old_create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVariables, reference_tf : utils.GlobalVariables, category_path_list : list ):
+def old_create_meter_objects(consumption_data : pd.DataFrame ,tf : timeframes.TimeFrame, reference_tf : timeframes.TimeFrame, category_path_list : list ):
     """
     Creates the meter objects from the consumption data. 
     The flex volume is calculated as the difference between the min/max value for the same hour and day of the week in the reference timeframe and the consumption data for the timeframe.
@@ -75,8 +75,8 @@ def old_create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalV
     
     Args:
         consumption_data (pd.DataFrame): The consumption data
-        tf (Inputs.GlobalVariables): The wanted timeframe
-        reference_tf (Inputs.GlobalVariables): The reference timeframe for the flex volume to find min/max values
+        tf (timeframes.TimeFrame): The wanted timeframe
+        reference_tf (timeframes.TimeFrame): The reference timeframe for the flex volume to find min/max values
         
     Returns:
         dict: a dictionary of the power meters
@@ -149,7 +149,7 @@ def old_create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalV
             continue
     return power_meters
 
-def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVariables, reference_tf : utils.GlobalVariables, category_path_list : list ):
+def create_meter_objects(consumption_data : pd.DataFrame ,tf : timeframes.TimeFrame, reference_tf : timeframes.TimeFrame, category_path_list : list ):
     """
     Creates the meter objects from the consumption data. 
     The flex volume is calculated as the difference between the min/max value for the same hour and day of the week in the reference timeframe and the consumption data for the timeframe.
@@ -159,8 +159,8 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVaria
     
     Args:
         consumption_data (pd.DataFrame): The consumption data
-        tf (Inputs.GlobalVariables): The wanted timeframe
-        reference_tf (Inputs.GlobalVariables): The reference timeframe for the flex volume to find min/max values
+        tf (Inputs.timeframes.TimeFrame): The wanted timeframe
+        reference_tf (timeframes.TimeFrame): The reference timeframe for the flex volume to find min/max values
         
     Returns:
         dict: a dictionary of the power meters
@@ -224,7 +224,7 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVaria
                 down_flex_volume['hour'] = down_flex_volume['Time(Local)'].dt.hour
                 down_flex_volume.set_index(['weekday', 'hour'], inplace=True)
 
-                # Using .map() to subtract the min values from 'value' column based on 'weekday' and 'hour'
+                # Using .map() to subtract the max values from 'value' column based on 'weekday' and 'hour'
                 down_flex_volume['value'] = down_flex_volume['value'] - down_flex_volume.index.map(lambda x: lookup_dict.get((meter_id, x[0], x[1]), (0,0))[0])
 
                 down_flex_volume.reset_index(inplace=True)
@@ -244,7 +244,7 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVaria
                 down_flex_volume['hour'] = down_flex_volume['Time(Local)'].dt.hour
                 down_flex_volume.set_index(['weekday', 'hour'], inplace=True)
 
-                # Using .map() to subtract the min values from 'value' column based on 'weekday' and 'hour'
+                # Using .map() to subtract the max values from 'value' column based on 'weekday' and 'hour'
                 down_flex_volume['value'] = down_flex_volume['value'] - down_flex_volume.index.map(lambda x: lookup_dict.get((meter_id, x[0], x[1]), (0,0))[0])
 
                 down_flex_volume.reset_index(inplace=True)
@@ -264,6 +264,14 @@ cat_path_list = ["../master-data/categorization_data/harktech_meters.csv",  "../
 new_power_meter_dict = create_meter_objects(consumption_data = consumption_data, tf= tf, reference_tf= reference_tf, category_path_list=cat_path_list) 
 
 old_power_meter_dict = create_meter_objects(consumption_data = consumption_data, tf= tf, reference_tf= reference_tf, category_path_list=cat_path_list) 
+
+m_id =list(new_power_meter_dict.keys())[1]
+
+new_power_meter_dict[m_id].up_flex_volume.equals(old_power_meter_dict[m_id].up_flex_volume)
+
+new_power_meter_dict[m_id].up_flex_volume
+
+old_power_meter_dict[m_id].up_flex_volume
 
 """
 
