@@ -186,4 +186,8 @@ down_flex_volume["value"] = max(down_flex_volume["value"]) - down_flex_volume["v
     The new method is way to slow and i have to speed it up. 
     One alternative is to make a df for each day of the week and hour which has the min/max values
 
+updated_old_version (which gave a lot of warnings due to trying to set values on a copy of a slice from a DataFrame)) : 
+down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour] =  lookup_dict[(meter_id, hour.strftime('%A'), hour.hour)][1] - down_flex_volume["value"].loc[down_flex_volume["Time(Local)"] == hour]
+(same for up_flex_volume)
+
 """

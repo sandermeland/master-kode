@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import os
-from zoneinfo import ZoneInfo
 from functools import reduce
 import pytz
 from code_map import final_markets, new_meters, timeframes
@@ -35,8 +34,12 @@ def get_frequency_data(tf : timeframes.TimeFrame, freq_directory : str):
     freq_df["Time"] = freq_df["Time"].dt.tz_localize("Europe/Oslo")
     start_datetime = pd.Timestamp(year = tf.year, month= tf.start_month, day=tf.start_day, hour= tf.start_hour, tz = "Europe/Oslo") #Europe/Oslo    
     end_datetime = pd.Timestamp(year = tf.year, month= tf.end_month, day=tf.end_day, hour= tf.end_hour, tz = "Europe/Oslo")
-    filtered_df = freq_df[(freq_df["Time"] >= start_datetime) & (freq_df["Time"] <= end_datetime)]
-    filtered_df = filtered_df.sort_values(by = "Time").reset_index(drop = True) 
+     # Create a copy of the slice to avoid the warning when using in-place operations
+    filtered_df = freq_df[(freq_df["Time"] >= start_datetime) & (freq_df["Time"] <= end_datetime)].copy()
+
+    # Can use in-place operations on filtered_df
+    filtered_df.sort_values(by="Time", inplace=True)
+    filtered_df.reset_index(drop=True, inplace=True)
     
     return filtered_df
 
