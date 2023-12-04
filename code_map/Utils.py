@@ -5,37 +5,16 @@ import os
 from zoneinfo import ZoneInfo
 from functools import reduce
 import pytz
-from code_map import final_markets, new_meters
+from code_map import final_markets, new_meters, timeframes
 
-@dataclass
-class GlobalVariables:
-    year : int
-    start_month : int 
-    end_month : int 
-    start_day : int 
-    end_day : int 
-    start_hour : int 
-    end_hour : int
-    
-
-
-one_hour = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 15, end_hour = 16) # it may be possible to start from hour 14
-
-one_day = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 26, end_day = 26, start_hour = 0, end_hour = 23)
-
-one_week = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 19, end_day = 25, start_hour = 0, end_hour = 23)
-
-half_month =  GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 14, end_day = 30, start_hour = 0, end_hour = 23)
-
-one_month = GlobalVariables(year = 2023, start_month = 6, end_month = 6, start_day = 1, end_day = 30, start_hour = 0, end_hour = 23)
 
 
 # will have to add a constraint for timeframe
-def get_frequency_data(tf : GlobalVariables, freq_directory : str):
+def get_frequency_data(tf : timeframes.TimeFrame, freq_directory : str):
     """ Function to get frequency data for a given time frame
 
     Args:
-        tf (GlobalVariables): the wanted timeframe where the data is wanted
+        tf (TimeFrame): the wanted timeframe where the data is wanted
         freq_directory (str): relative path to the directory where the frequency data is stored
 
     Returns:
@@ -66,7 +45,7 @@ def get_frequency_data(tf : GlobalVariables, freq_directory : str):
 
 #freq_data.head()
 
-def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe, markets):
+def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe : timeframes.TimeFrame, markets):
     """ Get a dictionary of the activation percentages for each market and hour
 
     Args:
@@ -95,12 +74,12 @@ def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe, markets):
 #freq_df = get_frequency_data(tf = one_day, freq_directory = '../master-data/frequency_data/2023-06')
 #freq_df.head()
 
-def get_afrr_activation_data(tf : GlobalVariables, afrr_directory : str, direction : str):
+def get_afrr_activation_data(tf : timeframes.TimeFrame, afrr_directory : str, direction : str):
     """
     Get a dataframe of the activation volumes for afrr up or down for each hour in the timeframe
 
     Args:
-        tf (GlobalVariables): the wanted timeframe where the data is wanted
+        tf (TimeFrame): the wanted timeframe where the data is wanted
         afrr_directory (str): relative path to the directory where the afrr data is stored
         direction (str): either "Up" or "Down" depending on which direction of afrr is wanted
 
@@ -167,11 +146,11 @@ afrr_activation.columns"""
 
 
 
-def get_timestamps(tf : GlobalVariables):
+def get_timestamps(tf : timeframes.TimeFrame):
     """ Function to get timestamps for a given time frame
 
     Args:
-        tf (GlobalVariables): the wanted timeframe where the data is wanted
+        tf (TimeFrame): the wanted timeframe where the data is wanted
 
     Returns:
         list: list of timestamps for the given time frame
@@ -182,11 +161,11 @@ def get_timestamps(tf : GlobalVariables):
     return timestamps
 
 
-def get_all_sets(timeframe : GlobalVariables):
+def get_all_sets(timeframe : timeframes.TimeFrame):
     """ Function to get all the sets needed for the optimization problem
 
     Args:
-        timeframe (GlobalVariables): the wanted timeframe where the data is wanted
+        timeframe (TimeFrame): the wanted timeframe where the data is wanted
 
     Returns:
         list: L which is a list of powermeter objects with the data for each meter within the timeframe
@@ -222,7 +201,7 @@ def get_all_sets(timeframe : GlobalVariables):
     
     consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
     all_market_list = final_markets.get_market_list(tf = timeframe, spot_path=spot_path, fcr_d_1_path= fcr_d_1_directory, fcr_d_2_path=fcr_d_2_directory, afrr_up_directory=afrr_up_directory, afrr_down_directory=afrr_down_directory, rk_price_down_path=rk_price_down_path,rk_price_up_path= rk_price_up_path, rk_volume_up_path=rk_volume_up_path, rk_volume_down_path=rk_volume_down_path, rkom_22_path=rkom_2022_path, rkom_23_path= rkom_2023_path)
-    power_meter_dict = new_meters.create_meter_objects(consumption_data = consumption_data, tf= timeframe, reference_tf= one_month, category_path_list=cat_path_list) 
+    power_meter_dict = new_meters.create_meter_objects(consumption_data = consumption_data, tf= timeframe, reference_tf= timeframes.one_month, category_path_list=cat_path_list) 
     freq_data = get_frequency_data(timeframe, '../master-data/frequency_data/2023-06')
     
     H = get_timestamps(timeframe)
@@ -304,7 +283,7 @@ def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m,
         Vp_h_m (matrix(float)): The volume for each hour and market
         F (pd.DataFrame): dictionary for frequency data
         markets_dict (dict): dictionary of the markets
-        timeframe (GlobalVariables): GlobalVariables object which tells the timeframe
+        timeframe (TimeFrame): TimeFrame object which tells the timeframe
 
     Returns:
         Ir_hlm (matrix(float)): The income from the reserve markets for each hour, load, and market

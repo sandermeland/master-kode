@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import random as rand
-from code_map import utils
+from code_map import utils, timeframes
 
 rand.seed(1337)
 
@@ -255,10 +255,9 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVaria
             continue
     return power_meters
 
-from code_map import utils
 consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
-tf = utils.one_day
-reference_tf = utils.one_month
+tf = timeframes.one_day
+reference_tf = timeframes.one_month
 cat_path_list = ["../master-data/categorization_data/harktech_meters.csv",  "../master-data/categorization_data/ev_meters.csv"]
 
     
