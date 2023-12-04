@@ -65,7 +65,7 @@ def combine_category_dfs(list_of_paths : list):
 
 
 # SØO - does it make sense to have have down flex volume as there only are consumption meters?
-def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVariables, reference_tf : utils.GlobalVariables, category_path_list : list ):
+def old_create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVariables, reference_tf : utils.GlobalVariables, category_path_list : list ):
     """
     Creates the meter objects from the consumption data. 
     The flex volume is calculated as the difference between the min/max value for the same hour and day of the week in the reference timeframe and the consumption data for the timeframe.
@@ -82,14 +82,14 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVaria
         dict: a dictionary of the power meters
     """
     power_meters = {}
-    updated_df = preprocess_consumption_df(consumption_data, tf)
-    monthly_df = preprocess_consumption_df(consumption_data, reference_tf)
+    updated_df = preprocess_consumption_df(consumption_data, tf).copy()
+    monthly_df = preprocess_consumption_df(consumption_data, reference_tf).copy()
     monthly_df['day_of_week'] = monthly_df['Time(Local)'].dt.day_name().astype('category')
     monthly_df['hour'] = monthly_df['Time(Local)'].dt.hour
 
 
     # Compute min and max values
-    grouped = monthly_df.groupby(['metering_point_id', 'day_of_week', 'hour'])
+    grouped = monthly_df.groupby(['metering_point_id', 'day_of_week', 'hour'], observed=True)
     aggregates = grouped['value'].agg(['min', 'max']).reset_index()
 
     # Create dictionary for fast lookup
@@ -149,21 +149,137 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVaria
             continue
     return power_meters
 
-
+def create_meter_objects(consumption_data : pd.DataFrame ,tf : utils.GlobalVariables, reference_tf : utils.GlobalVariables, category_path_list : list ):
     """
+    Creates the meter objects from the consumption data. 
+    The flex volume is calculated as the difference between the min/max value for the same hour and day of the week in the reference timeframe and the consumption data for the timeframe.
+    The response time is a random number between 0 and 300 seconds.
+    The sleep time is a random number between 0 and 30 minutes.
+    The direction is either up, down or both. 80 percent are chosen to be both while the last 20 percent are randomly chosen to be either up, both or down.
     
-    Når det kommer til response time hadde ikke kjartan noen innspill. Det kan være vanskelig å gjøre noe med kategorisering da vi ikke har oversikt over dette.
-    
-    Up/Down flex volume should be dependent of the same hour from previous same days of the week. Meaning that if we are looking at a monday at 12:00, we should look at all mondays at 12:00 and take the min/max of the values. This should be done for all hours in the timehorizone.
-    
-    old version : 
-    up_flex_volume = meter_values.copy()
-    up_flex_volume["value"] = up_flex_volume["value"] - min(up_flex_volume["value"])
-
-    down_flex_volume = meter_values.copy()
-    down_flex_volume["value"] = max(down_flex_volume["value"]) - down_flex_volume["value"] 
-    
-     The new method is way to slow and i have to speed it up. 
-        One alternative is to make a df for each day of the week and hour which has the min/max values
-    
+    Args:
+        consumption_data (pd.DataFrame): The consumption data
+        tf (Inputs.GlobalVariables): The wanted timeframe
+        reference_tf (Inputs.GlobalVariables): The reference timeframe for the flex volume to find min/max values
+        
+    Returns:
+        dict: a dictionary of the power meters
     """
+    power_meters = {}
+    updated_df = preprocess_consumption_df(consumption_data, tf).copy()
+    monthly_df = preprocess_consumption_df(consumption_data, reference_tf).copy()
+    monthly_df['day_of_week'] = monthly_df['Time(Local)'].dt.day_name().astype('category')
+    monthly_df['hour'] = monthly_df['Time(Local)'].dt.hour
+
+
+    # Compute min and max values
+    grouped = monthly_df.groupby(['metering_point_id', 'day_of_week', 'hour'], observed=True)
+    aggregates = grouped['value'].agg(['min', 'max']).reset_index()
+
+    # Create dictionary for fast lookup
+    lookup_dict = {(row['metering_point_id'], row['day_of_week'], row['hour']): (row['min'], row['max']) for index, row in aggregates.iterrows()}
+
+    category_df = combine_category_dfs(category_path_list)
+
+    for counter, meter_id in enumerate(updated_df["metering_point_id"].unique()):
+        # the meter_id has to have values for all hours both in the timeframe and the reference timeframe
+        if meter_id in monthly_df["metering_point_id"].unique():
+            
+            meter_values = updated_df.loc[(updated_df["metering_point_id"] == meter_id)]
+            meter_values = meter_values.drop(columns = "metering_point_id")
+            
+            # calculate response time based on the categories
+            # response time = mean of the flex_volume divided by the max consumption in the dataset for that meter times a value
+
+            if meter_id in category_df["Identification"].unique():
+                if category_df["category"].loc[category_df["Identification"] == meter_id].iloc[0] == "ev_meters":
+                    response_time = 1
+                elif category_df["category"].loc[category_df["Identification"] == meter_id].iloc[0] == "harktech_meters":
+                    response_time = 5
+                else:
+                    response_time = rand.random()*300
+            else:
+                response_time = rand.random()*300
+            # Set direction
+            directions = ["up", "down", "both"]
+            direction_index = rand.randint(0,2) if counter % 5 == 0 else 2
+            # Set area
+            area = updated_df['area'].loc[(updated_df["metering_point_id"] == meter_id)].iloc[0]
+            
+            if direction_index == 0: # up
+                up_flex_volume = meter_values.copy()
+                up_flex_volume['weekday'] = up_flex_volume['Time(Local)'].dt.strftime('%A')
+                up_flex_volume['hour'] = up_flex_volume['Time(Local)'].dt.hour
+                up_flex_volume.set_index(['weekday', 'hour'], inplace=True)
+
+                # Using .map() to subtract the min values from 'value' column based on 'weekday' and 'hour'
+                up_flex_volume['value'] = up_flex_volume['value'] - up_flex_volume.index.map(lambda x: lookup_dict.get((meter_id, x[0], x[1]), (0,0))[0])
+
+                up_flex_volume.reset_index(inplace=True)
+                meter = PowerMeter(meter_id = meter_id, response_time = response_time, up_flex_volume= up_flex_volume , down_flex_volume = [], direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+            
+            elif direction_index == 1:
+                down_flex_volume = meter_values.copy()
+                down_flex_volume['weekday'] = down_flex_volume['Time(Local)'].dt.strftime('%A')
+                down_flex_volume['hour'] = down_flex_volume['Time(Local)'].dt.hour
+                down_flex_volume.set_index(['weekday', 'hour'], inplace=True)
+
+                # Using .map() to subtract the min values from 'value' column based on 'weekday' and 'hour'
+                down_flex_volume['value'] = down_flex_volume['value'] - down_flex_volume.index.map(lambda x: lookup_dict.get((meter_id, x[0], x[1]), (0,0))[0])
+
+                down_flex_volume.reset_index(inplace=True)
+                meter = PowerMeter(meter_id = meter_id, response_time = response_time, up_flex_volume= [] , down_flex_volume = down_flex_volume, direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+            else:
+                up_flex_volume = meter_values.copy()
+                up_flex_volume['weekday'] = up_flex_volume['Time(Local)'].dt.strftime('%A')
+                up_flex_volume['hour'] = up_flex_volume['Time(Local)'].dt.hour
+                up_flex_volume.set_index(['weekday', 'hour'], inplace=True)
+
+                # Using .map() to subtract the min values from 'value' column based on 'weekday' and 'hour'
+                up_flex_volume['value'] = up_flex_volume['value'] - up_flex_volume.index.map(lambda x: lookup_dict.get((meter_id, x[0], x[1]), (0,0))[0])
+
+                up_flex_volume.reset_index(inplace=True)
+                down_flex_volume = meter_values.copy()
+                down_flex_volume['weekday'] = down_flex_volume['Time(Local)'].dt.strftime('%A')
+                down_flex_volume['hour'] = down_flex_volume['Time(Local)'].dt.hour
+                down_flex_volume.set_index(['weekday', 'hour'], inplace=True)
+
+                # Using .map() to subtract the min values from 'value' column based on 'weekday' and 'hour'
+                down_flex_volume['value'] = down_flex_volume['value'] - down_flex_volume.index.map(lambda x: lookup_dict.get((meter_id, x[0], x[1]), (0,0))[0])
+
+                down_flex_volume.reset_index(inplace=True)
+                meter = PowerMeter(meter_id = meter_id, response_time = response_time, up_flex_volume= up_flex_volume , down_flex_volume = down_flex_volume, direction = directions[direction_index], sleep_time = rand.random()*30, consumption_data = meter_values, area = area )
+
+            power_meters[meter_id] = meter
+        else:
+            continue
+    return power_meters
+
+from code_map import utils
+consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
+tf = utils.one_day
+reference_tf = utils.one_month
+cat_path_list = ["../master-data/categorization_data/harktech_meters.csv",  "../master-data/categorization_data/ev_meters.csv"]
+
+    
+new_power_meter_dict = create_meter_objects(consumption_data = consumption_data, tf= tf, reference_tf= reference_tf, category_path_list=cat_path_list) 
+
+old_power_meter_dict = create_meter_objects(consumption_data = consumption_data, tf= tf, reference_tf= reference_tf, category_path_list=cat_path_list) 
+
+"""
+
+Når det kommer til response time hadde ikke kjartan noen innspill. Det kan være vanskelig å gjøre noe med kategorisering da vi ikke har oversikt over dette.
+
+Up/Down flex volume should be dependent of the same hour from previous same days of the week. Meaning that if we are looking at a monday at 12:00, we should look at all mondays at 12:00 and take the min/max of the values. This should be done for all hours in the timehorizone.
+
+old version : 
+up_flex_volume = meter_values.copy()
+up_flex_volume["value"] = up_flex_volume["value"] - min(up_flex_volume["value"])
+
+down_flex_volume = meter_values.copy()
+down_flex_volume["value"] = max(down_flex_volume["value"]) - down_flex_volume["value"] 
+
+    The new method is way to slow and i have to speed it up. 
+    One alternative is to make a df for each day of the week and hour which has the min/max values
+
+"""
