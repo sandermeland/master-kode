@@ -41,6 +41,13 @@ class ReserveMarket:
     capacity_market: bool = True  # indicates if the market is a capacity market, default is True
     #bid_deadline: str 
     #bid_duration: float
+    def __eq__(self, other):
+        if not isinstance(other, ReserveMarket):
+            return NotImplemented
+        return (self.meter_id, self.location, self.capacity) == (other.meter_id, other.location, other.capacity)
+
+    def __hash__(self):
+        return hash((self.meter_id, self.location, self.capacity))
 
 
 #________________________________Global variables____________________________________
