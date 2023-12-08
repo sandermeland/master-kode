@@ -17,6 +17,13 @@ class PowerMeter:
     sleep_time: int  #  minutes the meter has to pause between each activation
     consumption_data: pd.DataFrame # The actual consumption data for the meter
     area: str # area of the metering point : NO1, NO2, NO3, NO4, NO5
+    def __eq__(self, other):
+        if not isinstance(other, PowerMeter):
+            return NotImplemented
+        return (self.meter_id, self.location, self.capacity) == (other.meter_id, other.location, other.capacity)
+
+    def __hash__(self):
+        return hash((self.meter_id, self.location, self.capacity))
 
         
 def preprocess_consumption_df(df, tf : timeframes.TimeFrame):
