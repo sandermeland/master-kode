@@ -20,10 +20,10 @@ class PowerMeter:
     def __eq__(self, other):
         if not isinstance(other, PowerMeter):
             return NotImplemented
-        return (self.meter_id, self.location, self.capacity) == (other.meter_id, other.location, other.capacity)
+        return (self.meter_id) == (other.meter_id)
 
     def __hash__(self):
-        return hash((self.meter_id, self.location, self.capacity))
+        return hash((self.meter_id))
 
         
 def preprocess_consumption_df(df, tf : timeframes.TimeFrame):
