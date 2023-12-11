@@ -44,10 +44,10 @@ class ReserveMarket:
     def __eq__(self, other):
         if not isinstance(other, ReserveMarket):
             return NotImplemented
-        return (self.meter_id, self.location, self.capacity) == (other.meter_id, other.location, other.capacity)
+        return (self.name, self.price_data) == (other.name, self.price_data)
 
     def __hash__(self):
-        return hash((self.meter_id, self.location, self.capacity))
+        return hash((self.name, self.price_data, self.volume_data))
 
 
 #________________________________Global variables____________________________________
