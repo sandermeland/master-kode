@@ -374,8 +374,8 @@ def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m,
                     Va_hm[h,m] = 0
     return Ir_hlm, Ia_hlm, Va_hm
 
-def get_compatibility_list(H,L,M):
-    """ function to get a list of compatible markets for each hour and load
+def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], index = True):
+    """ function to get a dict of compatible markets for each asset
 
     Args:
         H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
@@ -383,30 +383,28 @@ def get_compatibility_list(H,L,M):
         M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
 
     Returns:
-        list: list of compatible markets for each hour and load
+        dict: list of compatible loads for each market
     """
-    compatible_list = []
-    for _ in H:
-        hour_list = []
-        for asset in L:
-            asset_list = []
-            for m, market in enumerate(M):
-                if asset.direction == "up":
-                    if market.direction == "up":
-                        if market.area == asset.area or market.area == "all":
-                            asset_list.append(m)
-                elif asset.direction == "down":
-                    if market.area == asset.area or market.area == "all":
-                        if market.direction == "down":
-                            asset_list.append(m)
-                    
-                elif asset.direction == "both":
-                    if market.area == asset.area  or market.area == "all":
-                        asset_list.append(m)
-            hour_list.append(asset_list)
-        compatible_list.append(hour_list)
-    return compatible_list
+    compatible_dict = {}
 
+
+    for m, market in enumerate(M):
+        asset_list = []
+        for l, asset in enumerate(L):
+            if asset.response_time <= market.response_time and market.area == asset.area:
+                if market.direction == "up":
+                    if asset.direction != "down":
+                        asset_list.append(l) if index else asset_list.append(asset)
+                elif market.direction == "down":
+                    if asset.direction != "up":
+                        asset_list.append(l) if index else asset_list.append(asset)
+                else:
+                    asset_list.append(l) if index else asset_list.append(asset)
+        if index:
+            compatible_dict[m] = asset_list
+        else:
+            compatible_dict[market] = asset_list
+    return compatible_dict
 
 def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F):
     """ function to test the validity of the solution provided by a solver
