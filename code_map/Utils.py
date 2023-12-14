@@ -5,19 +5,20 @@ import os
 from functools import reduce
 import pytz
 from code_map import final_markets, new_meters, timeframes
+import gurobipy as gp
 
 
 
 # will have to add a constraint for timeframe
 def get_frequency_data(tf : timeframes.TimeFrame, freq_directory : str):
-    """ Function to get frequency data for a given time frame
+    """ Function to get frequency data for a given time frame. The data is for each 0.1 second.
 
     Args:
         tf (TimeFrame): the wanted timeframe where the data is wanted
         freq_directory (str): relative path to the directory where the frequency data is stored
 
     Returns:
-        df: dataframe for the given time frame and frequency data
+        df: dataframe of the frequency data for the given time frame 
     """
     
     freq_files_list = [file for file in os.listdir(freq_directory) if file.endswith('.csv')]
@@ -47,11 +48,12 @@ def get_frequency_data(tf : timeframes.TimeFrame, freq_directory : str):
 
 #freq_data.head()
 
-def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe : timeframes.TimeFrame, markets):
-    """ Get a dictionary of the activation percentages for each market and hour
+def get_FCR_N_percentages(freq_df : pd.DataFrame, hours : timeframes.TimeFrame, markets : [final_markets.ReserveMarket]):
+    """ Get a dictionary of the activation percentages for each market and hour. 
+    The activation percentages are based on the frequency data and says how much of the time the frequency was above 50.0 Hz and below 50.0 Hz for each hour
 
     Args:
-        freq_df (pd.DataFrame): dataframe of the frequency data
+        freq_df (pd.DataFrame): dataframe of the frequency data for the given time frame fetched from get_frequency_data
         timeframe (list): list of the wanted hours
         markets (list): list of the markets
 
@@ -60,7 +62,7 @@ def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe : timeframes.TimeFra
     """
     
     freq_dict = {}
-    for h, hour in enumerate(timeframe):
+    for h, hour in enumerate(hours):
         start_datetime = hour 
         end_datetime = hour + pd.Timedelta(hours=1)
         for m, market in enumerate(markets):
@@ -73,8 +75,7 @@ def get_FCR_N_percentages(freq_df : pd.DataFrame, timeframe : timeframes.TimeFra
                 freq_dict[h,m] = (0,0)
     return freq_dict
 
-#freq_df = get_frequency_data(tf = one_day, freq_directory = '../master-data/frequency_data/2023-06')
-#freq_df.head()
+
 
 def get_afrr_activation_data(tf : timeframes.TimeFrame, afrr_directory : str, direction : str):
     """
@@ -91,7 +92,7 @@ def get_afrr_activation_data(tf : timeframes.TimeFrame, afrr_directory : str, di
     afrr_files_list = [file for file in os.listdir(afrr_directory) if file.endswith('.csv')]
     afrr_dfs = []
     start_string = 'Regulation ' + direction + ' Activated'
-    print(start_string)
+    #print(start_string)
 
     for file in afrr_files_list:
         file_path = os.path.join(afrr_directory, file)
@@ -204,20 +205,20 @@ def get_all_sets(timeframe : timeframes.TimeFrame):
     consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
     all_market_list = final_markets.get_market_list(tf = timeframe, spot_path=spot_path, fcr_d_1_path= fcr_d_1_directory, fcr_d_2_path=fcr_d_2_directory, afrr_up_directory=afrr_up_directory, afrr_down_directory=afrr_down_directory, rk_price_down_path=rk_price_down_path,rk_price_up_path= rk_price_up_path, rk_volume_up_path=rk_volume_up_path, rk_volume_down_path=rk_volume_down_path, rkom_22_path=rkom_2022_path, rkom_23_path= rkom_2023_path)
     power_meter_dict = new_meters.create_meter_objects(consumption_data = consumption_data, tf= timeframe, reference_tf= timeframes.one_month, category_path_list=cat_path_list) 
-    freq_data = get_frequency_data(timeframe, '../master-data/frequency_data/2023-06')
+    freq_data = get_frequency_data(tf = timeframe, freq_directory= '../master-data/frequency_data/2023-06')
     
-    H = get_timestamps(timeframe)
+    H = get_timestamps(tf = timeframe)
 
     # Define the sets
     L = list(power_meter_dict.values())  # List of PowerMeter objects
     M = all_market_list  # List of ReserveMarket objects
 
-    F = get_FCR_N_percentages(freq_data, H, M)
+    F = get_FCR_N_percentages(freq_df = freq_data, hours = H , markets = M)
     
     
     return L, M, F, H, freq_data, power_meter_dict, consumption_data
 
-def get_parameters(L,M,H):
+def get_parameters(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp]):
     """ function to return the sets needed for the optimization problem
 
     Args:
@@ -271,8 +272,8 @@ def get_dominant_direction(freq_df : pd.DataFrame, hour : pd.Timestamp):
     else:
         return "down"
     
-def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m, Vp_h_m, F, markets_dict, timeframe):
-    """_summary_
+def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket], L : [new_meters.PowerMeter], dominant_directions : [str], Fu_h_l : np.array, Fd_h_l : np.array, P_h_m : np.array, Vp_h_m : np.array, F : dict, markets_dict : dict, timeframe : timeframes.TimeFrame):
+    """ Function to get the income dictionaries for the optimization problem
 
     Args:
         H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
@@ -283,7 +284,7 @@ def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m,
         Fd_h_l (matrix(float)): The flex volume down for each hour and load
         P_h_m (matrix(float)): The price for each hour and market
         Vp_h_m (matrix(float)): The volume for each hour and market
-        F (pd.DataFrame): dictionary for frequency data
+        F (dict): dictionary for frequency data
         markets_dict (dict): dictionary of the markets
         timeframe (TimeFrame): TimeFrame object which tells the timeframe
 
@@ -316,25 +317,18 @@ def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m,
     for h, hour in enumerate(H):
         for m, market in enumerate(M):
             for l, load in enumerate(L):
-                if market.direction == "both":
-                    if load.direction == "both":
-                        if dominant_directions[h] == "up":
-                            Ir_hlm[h,l,m] = Fu_h_l[h,l] * P_h_m[h,m]
-                        else:
-                            Ir_hlm[h,l ,m] = Fd_h_l[h,l] * P_h_m[h,m]
-                        #I[h,l,m] =(Fu_h_l[h,l]+ Fd_h_l[h,l])/2 * P_h_m[h,m]
-                    else:
-                        Ir_hlm[h,l,m] = 0
-                elif market.direction == "up":
-                    if load.direction != "down":
+                if market.direction == "both": #only accounts for FCR-N
+                    if load.direction == "up":
                         Ir_hlm[h,l,m] = Fu_h_l[h,l] * P_h_m[h,m]
+                    elif load.direction == "down":
+                        Ir_hlm[h,l ,m] = Fd_h_l[h,l] * P_h_m[h,m]
                     else:
-                        Ir_hlm[h,l,m] = 0
+                        up_val, down_val = F[h,m]
+                        Ir_hlm[h,l,m] = (Fu_h_l[h,l] * up_val + Fd_h_l[h,l] * down_val) * P_h_m[h,m]
+                elif market.direction == "up":
+                    Ir_hlm[h,l,m] = Fu_h_l[h,l] * P_h_m[h,m] if load.direction != "down" else 0
                 else: # market.direction == "down"
-                    if load.direction != "up":
-                        Ir_hlm[h,l,m] = Fd_h_l[h,l] * P_h_m[h,m]
-                    else:
-                        Ir_hlm[h,l,m] = 0
+                    Ir_hlm[h,l,m] = Fd_h_l[h,l] * P_h_m[h,m] if load.direction != "up" else 0
                 if market.capacity_market: 
                     if "FCR_N" in market.name:
                         up_val, down_val = F[h,m]
@@ -369,7 +363,6 @@ def get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m,
                         Va_hm[h,m] = 0
                 else:
                     # No capacity market, just regular income
-                    Ir_hlm[h,l,m] = P_h_m[h,m] * Vp_h_m[h,m]
                     Ia_hlm[h,l,m] = 0
                     Va_hm[h,m] = 0
     return Ir_hlm, Ia_hlm, Va_hm
@@ -406,18 +399,145 @@ def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.Reser
             compatible_dict[market] = asset_list
     return compatible_dict
 
-def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F):
+def run_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, dominant_directions : list, compatible_list : dict, log_filename : str, model_name : str):
+    """ Function to create and run an optimization model for bidding in the reserve markets for a given set of meters and markets. The bidding is for historical data
+
+    Args:
+        L (list(new_meters.PowerMeter]): set of all meters
+        M (list(final_markets.ReserveMarket]): set of all markets
+        H (list(pd.Timestamp]): set of all hours
+        F (dict): Dictionary to find the activation percentages for each market and hour
+        Ir_hlm (dict): Dictionary to find the reservation income from the reserve markets for each hour, load, and market
+        Ia_hlm (dict): Dictionary to find the activation income from the markets for each hour, load, and market
+        Va_hm (dict): Dictionary to find the activation volume from the markets for each hour and market
+        Vp_h_m (dict): The volume for each hour and market
+        Vm_m (list): Minimum volume for each market
+        R_m (list): Response time for each market
+        R_h_l (np.array): Response time for each load each hour
+        Fu_h_l (np.array): Up flex volume for each load that are compatible with up markets for each hour 
+        Fd_h_l (np.array): Down flex volume for each load that are compatible with down markets for each hour
+        dominant_directions (list): list of dominant directions for each hour
+        compatible_list (dict): dict of compatible markets for each asset
+        log_filename (str): name of the logfile
+        model_name (str): name of the model
+
+    Returns:
+        test_model (gp.Model): The model that was run
+        x (dict): The decision variables x[h,l,m] which tells if asset l is connected to market m at hour h
+        y (dict): The decision variables y[h,m] which tells if market m has a bid at hour h
+        w (dict): The decision variables w[h,m] which tells if market m is activated at hour h
+        d (dict): The decision variables d[h,l,m] which tells if asset l is compatible with market m at hour h
+    """
+    # Create a new model
+    model = gp.Model(model_name)
+    # Create decision variables
+    x = {}
+    d = {}
+    y = {}
+    w = {}
+    for h in range(len(H)):
+        for l in range(len(L)):
+            for m in range(len(M)):
+                # asset i is connected to market j at hour h
+                x[h, l, m] = model.addVar(lb = 0, ub = 1, vtype=gp.GRB.BINARY, name=f"x_{h}_{l}_{m}")
+
+                d[h,l,m] = 1 if l in compatible_list[m] else 0 # compatible_list takes care of both the area constraint and the direction constraint
+                
+                # adding the constraint
+                model.addConstr(x[h,l,m] <= d[h,l,m]) # if a load is not compatible with market m it cant be connected to it
+        for m in range(len(M)):
+            # market m has a bid at hour h
+            y[h, m] = model.addVar(lb = 0, ub = 1, vtype=gp.GRB.BINARY, name=f"y_{h}_{m}")
+            # market m is activated at hour h
+            w[h, m] = model.addVar(lb = 0, ub = 1, vtype=gp.GRB.BINARY , name=f"w_{h}_{m}")
+            
+    # Set the objective to maximize the total income expression
+    model.setObjective(sum(x[h,l,m] * (Ir_hlm[h,l,m] + Ia_hlm[h,l,m] * w[h,m]) for h in range(len(H)) for l in range(len(L)) for m in range(len(M))), gp.GRB.MAXIMIZE) # can possibly remove the x on the activation income
+
+    # Add constraints
+    for h in range(len(H)):
+        for l in range(len(L)):
+            # Each asset can only be connected to one market at a time
+            model.addConstr(sum(x[h, l, m] for m in range(len(M))) <= 1, f"single_market_for_asset_at_hour_{h}_nr.{l}")
+        
+        for m, market in enumerate(M):
+            up_val, down_val = F[h,m]
+            if up_val + down_val > 0:
+                model.addConstr(w[h,m] <= y[h,m], f"market_{m}_can_not_be_activated_at_hour_{h}_if_it_is_not_active")
+            else:
+                model.addConstr(w[h,m] == 0, f"market_{m}_can_not_be_activated_at_hour_{h}_if_it_is_not_active")
+            
+            # Connect the binary variables by using big M
+            model.addConstr(sum(x[h, l, m] for l in range(len(L))) <= len(L) * y[h, m], f"asset_connection_for_hour_{h}_market_{m}")
+        
+            # Max volume constraint
+            
+            if market.direction == "up":
+                # capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # activation volume constraint
+                model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) * w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in-_market_{m}_at_hour_{h}")
+                # min volume capacity constraint
+                model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+
+            elif market.direction == "down":
+                # max capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L))) <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # max activation volume constraint
+                model.addConstr(sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L))) * w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in_market_{m}_at_hour_{h}")
+                # min volume capacity constraint
+                model.addConstr(sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L))) >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+
+            else: # market.direction == "both" => In FCR-N you must be able to activate in both directions
+                # max capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # max activation volume constraint
+                model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) * w[h,m] <= Va_hm[h,m] , f"max_volume_for_activation_in_market_{m}_at_hour_{h}")
+                # min capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+                
+                # max capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L))) <= Vp_h_m[h,m] * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # max activation volume constraint
+                model.addConstr(sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L))) * w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in_market_{m}_at_hour_{h}")
+                # min capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L))) >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+            
+                # add a constraint where the reserved volume in the FCR_N markets has to be the same for each direction
+                # I cant find a way to do this in a mathematical model, i think it should be held out of the equation for this part and rather use it in the dynamic model
+                #model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) == sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L)))) # this can be hard as they have to be exactly equal
+               
+
+            # The response times for loads l connected to market m cannot exceed the max response time for m
+            for l in range(len(L)):
+                model.addConstr(x[h,l,m] * R_h_l[h,l] <= R_m[m] * y[h,m], f"response_time_for_hour_{h}_market_{m}")
+                
+    # Enable logging
+    model.setParam('LogFile', log_filename)
+
+    # Solve the model
+    model.optimize()
+        
+    if model.status == gp.GRB.Status.INFEASIBLE:
+        model.computeIIS()
+        
+        
+    return model, x, y, w, d   
+
+
+def test_solution_validity(x : dict, y : dict, w : dict, Va_hm : dict, L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], dominant_directions : [str], F : dict):
     """ function to test the validity of the solution provided by a solver
 
     Args:
         x (dict): dictionary of the binary variable which tells if an asset is connected to a market
         y (dict): dictionary of the binary variable which tells if a market has any bids
         w (dict): dictionary of the binary variable which tells if a market is activated
+        Va_hm (dict): dictionary of the volume from the activation markets for each hour and market
         L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
         M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
         H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
         dominant_directions (list(str)): list of the dominant direction for each hour
-        F (pd.DataFrame): dictionary for frequency data
+        F (dict): dictionary for frequency data
     Returns:
         str : a string that tells if the solution is valid. If not valid, the function will raise an error
     """
@@ -431,8 +551,8 @@ def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F):
                     assert x[h, l, m].X == 0, f"Up-direction asset {l} connected to down-direction market {m} at hour {h}"
                 elif load.direction == "down" and market.direction == "up":
                     assert x[h, l, m].X == 0, f"Down-direction asset {l} connected to up-direction market {m} at hour {h}"
-                elif market.direction == "both" and load.direction != "both":
-                    assert x[h, l, m].X == 0, f"Asset {l} with specific direction connected to both-direction market {m} at hour {h}"
+                #elif market.direction == "both" and load.direction != "both":
+                    #assert x[h, l, m].X == 0, f"Asset {l} with specific direction connected to both-direction market {m} at hour {h}"
                 elif market.area != load.area:
                     assert x[h, l, m].X == 0, f"Asset {l} in area {load.area} connected to market {m} in area {market.area} at hour {h}"
                 
@@ -456,7 +576,7 @@ def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F):
                 else:
                     total_flex_volume = sum(x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
             
-            assert total_flex_volume >= market.min_volume * y[h, m].X, f"Minimum volume constraint violated at hour {h} for market {m}"
+            assert round(total_flex_volume, 5) >= market.min_volume * y[h, m].X, f"Minimum volume constraint violated at hour {h} for market {m}"
             
             # Max volume constraint for both capacity and activation
             if market.direction == "up":
@@ -476,7 +596,7 @@ def test_solution_validity(x, y, w, Va_hm, L, M, H, dominant_directions, F):
                 total_max_volume = (total_up_max_volume * up_frac + total_down_max_volume * down_frac)
             
              # Assert the constraints
-            activation_constraint = total_max_volume  * w[h,m].X <= Va_hm[h,m]
+            activation_constraint = round(total_max_volume, 5)  * w[h,m].X <= Va_hm[h,m]
             assert activation_constraint, f"Activation constraint violated for hour {h}, market {m}"
             market_max_volume = market.volume_data.loc[market.volume_data["Time(Local)"] == hour].values[0][1]
             assert total_max_volume <= market_max_volume * y[h,m].X, f"Maximum volume constraint violated at hour {h} for market {m}"
