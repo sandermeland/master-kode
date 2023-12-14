@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import random as rand
-from code_map import utils, timeframes
+from code_map import timeframes
 
 rand.seed(1337)
 
