@@ -73,3 +73,55 @@ Solution count 3: 2122.34 2025.36 -0
 Optimal solution found (tolerance 1.00e-04)
 Warning: max constraint violation (1.0000e-06) exceeds tolerance
 Best objective 2.122336244406e+03, best bound 2.122336244406e+03, gap 0.0000%
+
+Gurobi 10.0.3 (mac64[rosetta2]) logging started Wed Dec 13 12:06:07 2023
+
+Set parameter LogFile to value "weekly_test_model.log"
+Gurobi Optimizer version 10.0.3 build v10.0.3rc0 (mac64[rosetta2])
+
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+Optimize a model with 6572952 rows, 3260208 columns and 19756297 nonzeros
+Model fingerprint: 0x101a69a9
+Model has 132702 quadratic objective terms
+Model has 1488 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [5e-06, 2e+05]
+  QObjective range [1e-06, 3e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [2e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Presolve removed 6528666 rows and 1867366 columns (presolve time = 5s) ...
+Presolve removed 6530720 rows and 3230404 columns (presolve time = 10s) ...
+Presolve removed 6570720 rows and 3258531 columns
+Presolve time: 11.63s
+Presolved: 2768 rows, 2213 columns, 8300 nonzeros
+Found heuristic solution: objective 2025.3590805
+Variable types: 0 continuous, 2213 integer (2213 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.1223362e+03   2.690000e+02   0.000000e+00     13s
+       1    2.1223362e+03   0.000000e+00   0.000000e+00     13s
+
+Root relaxation: objective 2.122336e+03, 1 iterations, 0.00 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    2122.3362444 2122.33624  0.00%     -   13s
+
+Explored 1 nodes (1 simplex iterations) in 14.82 seconds (18.23 work units)
+Thread count was 8 (of 8 available processors)
+
+Solution count 3: 2122.34 2025.36 -0 
+
+Optimal solution found (tolerance 1.00e-04)
+Warning: max constraint violation (1.0000e-06) exceeds tolerance
+Best objective 2.122336244406e+03, best bound 2.122336244406e+03, gap 0.0000%
