@@ -4,13 +4,13 @@ import numpy as np
 
 
 
-def save_collections(L,M,F,H,freq_data,power_meter_dict,consumption_data,L_u,L_d,Fu_h_l,Fd_h_l,R_h_l,P_h_m,Vp_h_m,Vm_m,R_m,dominant_directions,Ir_hlm,Ia_hlm,Va_hm,compatible_list):
+def save_collections(L,M,F,H,freq_data,power_meter_dict,consumption_data,L_u,L_d,Fu_h_l,Fd_h_l,R_h_l,P_h_m,Vp_h_m,Vm_m,R_m,dominant_directions,Ir_hlm,Ia_hlm,Va_hm,compatible_list, pkl_filename):
     collection_list = [L, M, F, H, freq_data, power_meter_dict, consumption_data, L_u, L_d, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m, dominant_directions, Ir_hlm, Ia_hlm, Va_hm, compatible_list]
     name_list = ["L", "M", "F", "H", "freq_data", "power_meter_dict", "consumption_data", "L_u", "L_d", "Fu_h_l", "Fd_h_l", "R_h_l", "P_h_m", "Vp_h_m", "Vm_m", "R_m", "dominant_directions", "Ir_hlm", "Ia_hlm", "Va_hm", "compatible_list"]
     # Assuming your collections are named collection1, collection2, ..., collection12
     all_collections = {name : collection for name, collection in zip(name_list, collection_list)}
 
-    with open('weekly_collections.pkl', 'wb') as file:
+    with open(pkl_filename, 'wb') as file:
         pickle.dump(all_collections, file)
     return None
 
