@@ -6,7 +6,7 @@ from functools import reduce
 import pytz
 from code_map import final_markets, new_meters, timeframes
 import gurobipy as gp
-
+import pickle
 
 
 # will have to add a constraint for timeframe
@@ -602,7 +602,7 @@ def test_solution_validity(x : dict, y : dict, w : dict, Va_hm : dict, L : [new_
             assert total_max_volume <= market_max_volume * y[h,m].X, f"Maximum volume constraint violated at hour {h} for market {m}"
     return "Solution is valid"
 
-def get_market_count_dict(x, H, L, M, dominant_directions):
+def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], dominant_directions):
     """ function to get a dictionary of the results of the optimization problem.
         The solution is represented as a dataframe for each hour which tells how many assets and how much flex volume is connected to each market for each hour.
 
@@ -651,3 +651,34 @@ def get_market_count_dict(x, H, L, M, dominant_directions):
         market_count["Total Flex Volume"] = flex_volumes
         market_count_dict[hour] = market_count
     return market_count_dict
+
+def compare_current_and_new_solution(current_x_pkl_file : str, new_x_values : dict, H : [pd.Timestamp], L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], dominant_directions : [str]):
+    """ Function to compare the results of the optimization problem for the new solution and an old one which is stored as a pkl file
+
+    Args:
+        current_x_pkl_file (str): Filename of the pkl file with the old solution
+        new_x_values (dict): The new x values
+        H (pd.Timestamp]): set of all hours
+        L (new_meters.PowerMeter]): set of all meters
+        M (final_markets.ReserveMarket]): set of all markets
+        dominant_directions (str]): list of the dominant direction for each hour
+
+    Returns:
+        dict: dict of the differences of the two solutions for each hour. Each hour holds two dataframes, one for the old solution and one for the new solution
+    """
+    # Load the saved values
+    with open(current_x_pkl_file, 'rb') as f:
+        original_x_values = pickle.load(f)
+
+    old_dict = get_market_count_dict(x = original_x_values, H = H, L = L, M= M, dominant_directions= dominant_directions)
+    new_dict = get_market_count_dict(x = new_x_values, H=H, L=L, M=M, dominant_directions= dominant_directions)
+
+    differences = {}
+    for key in old_dict:
+        if not old_dict[key].equals(new_dict[key]):
+            differences[key] = (new_dict[key], old_dict[key])
+            
+
+    for key, (mod_val, orig_val) in differences.items():
+        print(f"Difference for hour {key}: \n Original={display(orig_val)}, \n  Modified={display(mod_val)}")
+    return differences
