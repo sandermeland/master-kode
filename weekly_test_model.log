@@ -125,3 +125,26 @@ Solution count 3: 2122.34 2025.36 -0
 Optimal solution found (tolerance 1.00e-04)
 Warning: max constraint violation (1.0000e-06) exceeds tolerance
 Best objective 2.122336244406e+03, best bound 2.122336244406e+03, gap 0.0000%
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Fri Dec 15 11:43:08 2023
+
+Set parameter LogFile to value "weekly_test_model.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+Optimize a model with 46014024 rows, 22821456 columns and 144938485 nonzeros
+Model fingerprint: 0x54551e8d
+Model has 1176027 quadratic objective terms
+Model has 12096 quadratic constraints
+Variable types: 0 continuous, 22821456 integer (22821456 binary)
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 9e-01]
+  Objective range  [4e-07, 1e+02]
+  QObjective range [3e-07, 8e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
