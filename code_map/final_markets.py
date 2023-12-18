@@ -143,6 +143,7 @@ def preprocess_FCR(df: pd.DataFrame, start_month : int, year : int, start_day : 
         if "NOK" in col:
             df = df.drop(columns=[col])
     df["FCR-D Price EUR/MW"] = df["FCR-D Price EUR/MW"].fillna(0)
+    df["FCR-N Price EUR/MW"] = df["FCR-N Price EUR/MW"].fillna(0)
     df.drop(columns= 'Hournumber', inplace=True)
     date_format = '%d.%m.%Y %H:%M:%S %z'
     
