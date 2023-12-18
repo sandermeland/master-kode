@@ -148,3 +148,53 @@ Coefficient statistics:
   RHS range        [1e+00, 1e+00]
   QRHS range       [1e+00, 1e+02]
 Found heuristic solution: objective -0.0000000
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Mon Dec 18 11:06:50 2023
+
+Set parameter LogFile to value "weekly_test_model.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+Optimize a model with 6573432 rows, 3260208 columns and 20327160 nonzeros
+Model fingerprint: 0x35c46531
+Model has 133324 quadratic objective terms
+Model has 1728 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [5e-06, 2e+05]
+  QObjective range [1e-06, 3e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [2e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Presolve removed 6518237 rows and 1855190 columns (presolve time = 5s) ...
+Presolve removed 6518237 rows and 1855190 columns
+Presolve time: 5.40s
+Presolved: 67072 rows, 1410790 columns, 294089 nonzeros
+Variable types: 0 continuous, 1410790 integer (1410790 binary)
+Found heuristic solution: objective 2509.5042457
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.6194943e+03   5.594004e+02   0.000000e+00     10s
+      28    2.6186649e+03   0.000000e+00   0.000000e+00     10s
+
+Root relaxation: objective 2.618665e+03, 28 iterations, 0.00 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    2618.6649229 2618.66492  0.00%     -   11s
+
+Explored 1 nodes (28 simplex iterations) in 11.94 seconds (9.46 work units)
+Thread count was 8 (of 8 available processors)
+
+Solution count 3: 2618.66 2509.5 -0 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 2.618664922925e+03, best bound 2.618664922925e+03, gap 0.0000%

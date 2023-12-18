@@ -525,6 +525,131 @@ def run_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.Reser
     return model, x, y, w, d   
 
 
+def run_optimization_model_no_numpy(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, compatible_list : dict, log_filename : str, model_name : str):
+    """ Function to create and run an optimization model for bidding in the reserve markets for a given set of meters and markets. The bidding is for historical data
+
+    Args:
+        L (list(new_meters.PowerMeter]): set of all meters
+        M (list(final_markets.ReserveMarket]): set of all markets
+        H (list(pd.Timestamp]): set of all hours
+        F (dict): Dictionary to find the activation percentages for each market and hour
+        Ir_hlm (dict): Dictionary to find the reservation income from the reserve markets for each hour, load, and market
+        Ia_hlm (dict): Dictionary to find the activation income from the markets for each hour, load, and market
+        Va_hm (dict): Dictionary to find the activation volume from the markets for each hour and market
+        Vp_h_m (dict): The volume for each hour and market
+        Vm_m (list): Minimum volume for each market
+        R_m (list): Response time for each market
+        R_h_l (np.array): Response time for each load each hour
+        Fu_h_l (np.array): Up flex volume for each load that are compatible with up markets for each hour 
+        Fd_h_l (np.array): Down flex volume for each load that are compatible with down markets for each hour
+        dominant_directions (list): list of dominant directions for each hour
+        compatible_list (dict): dict of compatible markets for each asset
+        log_filename (str): name of the logfile
+        model_name (str): name of the model
+
+    Returns:
+        test_model (gp.Model): The model that was run
+        x (dict): The decision variables x[h,l,m] which tells if asset l is connected to market m at hour h
+        y (dict): The decision variables y[h,m] which tells if market m has a bid at hour h
+        w (dict): The decision variables w[h,m] which tells if market m is activated at hour h
+        d (dict): The decision variables d[h,l,m] which tells if asset l is compatible with market m at hour h
+    """
+    # Create a new model
+    model = gp.Model(model_name)
+    # Create decision variables
+    x = {}
+    d = {}
+    y = {}
+    w = {}
+    for h in range(len(H)):
+        for l in range(len(L)):
+            for m in range(len(M)):
+                # asset i is connected to market j at hour h
+                x[h, l, m] = model.addVar(lb = 0, ub = 1, vtype=gp.GRB.BINARY, name=f"x_{h}_{l}_{m}")
+
+                d[h,l,m] = 1 if l in compatible_list[m] else 0 # compatible_list takes care of both the area constraint and the direction constraint
+                
+                # adding the constraint
+                model.addConstr(x[h,l,m] <= d[h,l,m]) # if a load is not compatible with market m it cant be connected to it
+        for m in range(len(M)):
+            # market m has a bid at hour h
+            y[h, m] = model.addVar(lb = 0, ub = 1, vtype=gp.GRB.BINARY, name=f"y_{h}_{m}")
+            # market m is activated at hour h
+            w[h, m] = model.addVar(lb = 0, ub = 1, vtype=gp.GRB.BINARY , name=f"w_{h}_{m}")
+            
+    # Set the objective to maximize the total income expression
+    model.setObjective(sum(x[h,l,m] * (Ir_hlm[h,l,m] + Ia_hlm[h,l,m] * w[h,m]) for h in range(len(H)) for l in range(len(L)) for m in range(len(M))), gp.GRB.MAXIMIZE) # can possibly remove the x on the activation income
+
+    # Add constraints
+    for h, hour in enumerate(H):
+        for l in range(len(L)):
+            # Each asset can only be connected to one market at a time
+            model.addConstr(sum(x[h, l, m] for m in range(len(M))) <= 1, f"single_market_for_asset_at_hour_{h}_nr.{l}")
+        
+        for m, market in enumerate(M):
+            up_val, down_val = F[h,m]
+            if up_val + down_val > 0:
+                model.addConstr(w[h,m] <= y[h,m], f"market_{m}_can_not_be_activated_at_hour_{h}_if_it_is_not_active")
+            else:
+                model.addConstr(w[h,m] == 0, f"market_{m}_can_not_be_activated_at_hour_{h}_if_it_is_not_active")
+            
+            # Connect the binary variables by using big M
+            model.addConstr(sum(x[h, l, m] for l in range(len(L))) <= len(L) * y[h, m], f"asset_connection_for_hour_{h}_market_{m}")
+        
+            # Max volume constraint
+            
+            if market.direction == "up":
+                # capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down") <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # activation volume constraint
+                model.addConstr(sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")* w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in-_market_{m}_at_hour_{h}")
+                # min volume capacity constraint
+                model.addConstr(sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down") >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+
+            elif market.direction == "down":
+                # max capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up") <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # max activation volume constraint
+                model.addConstr(sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up") * w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in_market_{m}_at_hour_{h}")
+                # min volume capacity constraint
+                model.addConstr(sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up") >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+
+            else: # market.direction == "both" => In FCR-N you must be able to activate in both directions
+                # capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down") <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # activation volume constraint
+                model.addConstr(sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")* w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in-_market_{m}_at_hour_{h}")
+                # min volume capacity constraint
+                model.addConstr(sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down") >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+
+                # max capacity volume constraint
+                model.addConstr(sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up") <= Vp_h_m[h,m]  * y[h,m], f"max_volume_for_hour_{h}_market_{m}")
+                # max activation volume constraint
+                model.addConstr(sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up") * w[h,m] <= Va_hm[h,m], f"max_volume_for_activation_in_market_{m}_at_hour_{h}")
+                # min volume capacity constraint
+                model.addConstr(sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up") >= Vm_m[m] * y[h, m], f"min_volume_for_hour_{h}_market_{m}") 
+            
+                # add a constraint where the reserved volume in the FCR_N markets has to be the same for each direction
+                # I cant find a way to do this in a mathematical model, i think it should be held out of the equation for this part and rather use it in the dynamic model
+                #model.addConstr(sum(x[h, l, m] * Fu_h_l[h,l] for l in range(len(L))) == sum(x[h, l, m] * Fd_h_l[h,l] for l in range(len(L)))) # this can be hard as they have to be exactly equal
+               
+
+            # The response times for loads l connected to market m cannot exceed the max response time for m
+            for l, load in enumerate(L):
+                model.addConstr(x[h,l,m] * load.response_time <= market.response_time * y[h,m], f"response_time_for_hour_{h}_market_{m}")
+                
+    # Enable logging
+    model.setParam('LogFile', log_filename)
+
+    # Solve the model
+    model.optimize()
+        
+    if model.status == gp.GRB.Status.INFEASIBLE:
+        model.computeIIS()
+        
+        
+    return model, x, y, w, d  
+
 def test_solution_validity(x : dict, y : dict, w : dict, Va_hm : dict, L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], dominant_directions : [str], F : dict):
     """ function to test the validity of the solution provided by a solver
 
