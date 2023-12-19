@@ -44,11 +44,50 @@ def get_frequency_data(tf : timeframes.TimeFrame, freq_directory : str):
     
     return filtered_df
 
-#freq_data = get_frequency_data(one_week, '../master-data/frequency_data/2023-06')
+freq_data = get_frequency_data(timeframes.one_day, '../master-data/frequency_data/2023-06')
 
 #freq_data.head()
 
+def find_frequency_quarters(freq_df : pd.DataFrame, hours : [pd.Timestamp], index = True):
+    average_freq_dict = {}
+    for h, hour in enumerate(hours):
+        start_datetime = hour 
+        quarter_1 = hour + pd.Timedelta(minutes=15) # 0-15 minutes
+        quarter_2 = quarter_1 + pd.Timedelta(minutes=15) # 15-30 minutes
+        quarter_3 = quarter_2 + pd.Timedelta(minutes=15) # 30-45 minutes
+        quarter_4 = quarter_3 + pd.Timedelta(minutes=15) # 45-60 minutes
+        quarter_tfs = [start_datetime, quarter_1, quarter_2, quarter_3, quarter_4]
+        # make 4 quarters for each hour within a loop
+        average_freqs = []  
+        for i in range(len(quarter_tfs)-1):
+            filtered_df = freq_df[(freq_df["Time"] >= quarter_tfs[i]) & (freq_df["Time"] <= quarter_tfs[i+1])]
+            mean_val = filtered_df["Value"].mean()
+            if mean_val < 49.9:
+                mean_val = 49.9
+            elif mean_val > 50.1:
+                mean_val = 50.1
+            average_freqs.append(mean_val)
+        if index:
+            average_freq_dict[h] = average_freqs        
+        else:
+            average_freq_dict[hour] = average_freqs
+    return average_freq_dict
+    
+tf = timeframes.one_day
+hours = pd.date_range(start = pd.Timestamp(year = tf.year, month= tf.start_month, day=tf.start_day, hour= tf.start_hour, tz = "Europe/Oslo"), end = pd.Timestamp(year = tf.year, month= tf.end_month, day=tf.end_day, hour= tf.end_hour, tz = "Europe/Oslo"), freq = 'H', tz = "Europe/Oslo")
+
+average_freq_dict = find_frequency_quarters(freq_df = freq_data, hours = hours)
+
+average_freq_dict[0]
+sum(average_freq_dict[0])
+
+10 * 2 * (200 - sum(average_freq_dict[0]))
+
+2000 * 2 -10* 2* sum(average_freq_dict[0])
+
+
 def get_FCR_N_percentages(freq_df : pd.DataFrame, hours : timeframes.TimeFrame, markets : [final_markets.ReserveMarket]):
+
     """ Get a dictionary of the activation percentages for each market and hour. 
     The activation percentages are based on the frequency data and says how much of the time the frequency was above 50.0 Hz and below 50.0 Hz for each hour
 
@@ -272,7 +311,7 @@ def get_dominant_direction(freq_df : pd.DataFrame, hour : pd.Timestamp):
     else:
         return "down"
     
-def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket], L : [new_meters.PowerMeter], dominant_directions : [str], Fu_h_l : np.array, Fd_h_l : np.array, P_h_m : np.array, Vp_h_m : np.array, F : dict, markets_dict : dict, timeframe : timeframes.TimeFrame):
+def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket], L : [new_meters.PowerMeter], freq_data : pd.DataFrame, Fu_h_l : np.array, Fd_h_l : np.array, P_h_m : np.array, Vp_h_m : np.array, F : dict, markets_dict : dict, timeframe : timeframes.TimeFrame):
     """ Function to get the income dictionaries for the optimization problem
 
     Args:
@@ -295,6 +334,8 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
     """
     afrr_activation_up = get_afrr_activation_data(tf = timeframe, afrr_directory = '../master-data/aFRR_activation/', direction = "Up")
     afrr_activation_down = get_afrr_activation_data(tf = timeframe, afrr_directory = '../master-data/aFRR_activation/', direction = "Down")
+    frequency_quarter_dict = find_frequency_quarters(freq_df = freq_data, hours = H, index = True)
+    
     
     Ir_hlm = {} # reservation income
     Ia_hlm = {} # activation income
@@ -324,22 +365,32 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
                         Ir_hlm[h,l ,m] = Fd_h_l[h,l] * P_h_m[h,m]
                     else:
                         up_val, down_val = F[h,m]
-                        Ir_hlm[h,l,m] = (Fu_h_l[h,l] * up_val + Fd_h_l[h,l] * down_val) * P_h_m[h,m]
+                        ## the reservation price should only depend on which direction has the lowst aggregated volume. 
+                        # FCR-N should have bids with equal volume in both directions and therefore it depends on the lowest volume of the portfolio
+                        Ir_hlm[h,l,m] = (Fu_h_l[h,l] * up_val + Fd_h_l[h,l] * down_val) * P_h_m[h,m] 
                 elif market.direction == "up":
                     Ir_hlm[h,l,m] = Fu_h_l[h,l] * P_h_m[h,m] if load.direction != "down" else 0
                 else: # market.direction == "down"
                     Ir_hlm[h,l,m] = Fd_h_l[h,l] * P_h_m[h,m] if load.direction != "up" else 0
                 if market.capacity_market: 
                     if "FCR_N" in market.name:
-                        up_val, down_val = F[h,m]
-                        Va_hm[h,m] = Vp_h_m[h,m] * (up_val + down_val) if (up_val + down_val) > 0 else 0
+                        #up_val, down_val = F[h,m]
+                        Va_hm[h,m] = Vp_h_m[h,m] #* (up_val + down_val) if (up_val + down_val) > 0 else 0
+                        frequency_quarters = frequency_quarter_dict[h]
                         if load.direction == "both":
-                            activation_income = (Fu_h_l[h,l] * up_val * RK_up_prices[(market.area, hour)] + 
-                                                Fd_h_l[h,l] * down_val * RK_down_prices[(market.area, hour)])
+                            activation_vol = (Fu_h_l[h,l] * up_val + Fd_h_l[h,l] * down_val)
                             # Add to the objective expression
-                            Ia_hlm[h,l,m] = activation_income
+                        elif load.direction == "up":
+                            activation_vol = Fu_h_l[h,l]
+                        else: # load.direction == "down"
+                            activation_vol = Fd_h_l[h,l]
+                        activated_FCR = 2000 * activation_vol - 10 * activation_vol * sum(frequency_quarters)
+                        if activated_FCR < 0:
+                            activated_FCR = activated_FCR * -1
+                            Ia_hlm[h,l,m] = activated_FCR * RK_down_prices[(market.area, hour)]
                         else:
-                            Ia_hlm[h,l,m] = 0
+                            Ia_hlm[h,l,m] = activated_FCR * RK_up_prices[(market.area, hour)]
+                        
                     elif "aFRR" in market.name: # will have to add the other markets later - especially aFRR and RKOM
                         if market.direction == "up":
                             activated_volume = aFRR_activation_up_volume[(market.area, hour)]
@@ -358,7 +409,7 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
                         else:
                             Ia_hlm[h,l,m] = 0
                         
-                    else: # No activation income, just regular income
+                    else: # No activation income in other markets than afrr and fcr-d, just regular income
                         Ia_hlm[h,l,m] = 0
                         Va_hm[h,m] = 0
                 else:
