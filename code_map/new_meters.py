@@ -26,7 +26,7 @@ class PowerMeter:
         return hash((self.meter_id))
 
         
-def preprocess_consumption_df(df, tf : timeframes.TimeFrame):
+def preprocess_consumption_df(df, tf : timeframes.TimeFrame, areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]):
     """ Function to preprocess the consumption data for a given time frame
 
     Args:
@@ -55,7 +55,10 @@ def preprocess_consumption_df(df, tf : timeframes.TimeFrame):
     
     df.rename(columns={'start_time_local':'Time(Local)'}, inplace=True)
     df["value"] = df["value"] * 0.001 # convert from KWh to MWh
-    return df
+    if len(areas) == 1:
+        return df.loc[df["area"] == areas[0]]
+    else:
+        return df
 
 
 def combine_category_dfs(list_of_paths : list):
@@ -69,7 +72,7 @@ def combine_category_dfs(list_of_paths : list):
         dfs.append(df)
     return pd.concat(dfs, ignore_index = True)
         
-def create_meter_objects(consumption_data : pd.DataFrame ,tf : timeframes.TimeFrame, reference_tf : timeframes.TimeFrame, category_path_list : list ):
+def create_meter_objects(consumption_data : pd.DataFrame ,tf : timeframes.TimeFrame, reference_tf : timeframes.TimeFrame, category_path_list : list, areas = ["NO1", "NO2", "NO3", "NO4", "NO5"] ):
     """
     Creates the meter objects from the consumption data. 
     The flex volume is calculated as the difference between the min/max value for the same hour and day of the week in the reference timeframe and the consumption data for the timeframe.
@@ -81,13 +84,15 @@ def create_meter_objects(consumption_data : pd.DataFrame ,tf : timeframes.TimeFr
         consumption_data (pd.DataFrame): The consumption data
         tf (Inputs.timeframes.TimeFrame): The wanted timeframe
         reference_tf (timeframes.TimeFrame): The reference timeframe for the flex volume to find min/max values
+        category_path_list (list): List of paths to the category csv files
+        areas (list, optional): List of areas to include. Defaults to ["NO1", "NO2", "NO3", "NO4", "NO5"]. If only one area is wanted, the list should only contain one element.
         
     Returns:
         dict: a dictionary of the power meters
     """
     power_meters = {}
-    updated_df = preprocess_consumption_df(consumption_data, tf).copy()
-    monthly_df = preprocess_consumption_df(consumption_data, reference_tf).copy()
+    updated_df = preprocess_consumption_df(consumption_data, tf, areas).copy()
+    monthly_df = preprocess_consumption_df(consumption_data, reference_tf, areas).copy()
     monthly_df['day_of_week'] = monthly_df['Time(Local)'].dt.day_name().astype('category')
     monthly_df['hour'] = monthly_df['Time(Local)'].dt.hour
 
