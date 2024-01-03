@@ -203,7 +203,7 @@ def get_timestamps(tf : timeframes.TimeFrame):
     return timestamps
 
 
-def get_all_sets(timeframe : timeframes.TimeFrame):
+def get_all_sets(timeframe : timeframes.TimeFrame, areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]):
     """ Function to get all the sets needed for the optimization problem
 
     Args:
@@ -242,8 +242,8 @@ def get_all_sets(timeframe : timeframes.TimeFrame):
     cat_path_list = ["../master-data/categorization_data/harktech_meters.csv",  "../master-data/categorization_data/ev_meters.csv"]
     
     consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
-    all_market_list = final_markets.get_market_list(tf = timeframe, spot_path=spot_path, fcr_d_1_path= fcr_d_1_directory, fcr_d_2_path=fcr_d_2_directory, afrr_up_directory=afrr_up_directory, afrr_down_directory=afrr_down_directory, rk_price_down_path=rk_price_down_path,rk_price_up_path= rk_price_up_path, rk_volume_up_path=rk_volume_up_path, rk_volume_down_path=rk_volume_down_path, rkom_22_path=rkom_2022_path, rkom_23_path= rkom_2023_path)
-    power_meter_dict = new_meters.create_meter_objects(consumption_data = consumption_data, tf= timeframe, reference_tf= timeframes.one_month, category_path_list=cat_path_list) 
+    all_market_list = final_markets.get_market_list(tf = timeframe, spot_path=spot_path, fcr_d_1_path= fcr_d_1_directory, fcr_d_2_path=fcr_d_2_directory, afrr_up_directory=afrr_up_directory, afrr_down_directory=afrr_down_directory, rk_price_down_path=rk_price_down_path,rk_price_up_path= rk_price_up_path, rk_volume_up_path=rk_volume_up_path, rk_volume_down_path=rk_volume_down_path, rkom_22_path=rkom_2022_path, rkom_23_path= rkom_2023_path, areas=areas)
+    power_meter_dict = new_meters.create_meter_objects(consumption_data = consumption_data, tf= timeframe, reference_tf= timeframes.one_month, category_path_list=cat_path_list, areas = areas) 
     freq_data = get_frequency_data(tf = timeframe, freq_directory= '../master-data/frequency_data/2023-06')
     
     H = get_timestamps(tf = timeframe)
@@ -311,7 +311,7 @@ def get_dominant_direction(freq_df : pd.DataFrame, hour : pd.Timestamp):
     else:
         return "down"
     
-def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket], L : [new_meters.PowerMeter], freq_data : pd.DataFrame, Fu_h_l : np.array, Fd_h_l : np.array, P_h_m : np.array, Vp_h_m : np.array, F : dict, markets_dict : dict, timeframe : timeframes.TimeFrame):
+def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket], L : [new_meters.PowerMeter], freq_data : pd.DataFrame, Fu_h_l : np.array, Fd_h_l : np.array, P_h_m : np.array, Vp_h_m : np.array, F : dict, markets_dict : dict, timeframe : timeframes.TimeFrame, areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]):
     """ Function to get the income dictionaries for the optimization problem
 
     Args:
@@ -326,6 +326,7 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
         F (dict): dictionary for frequency data
         markets_dict (dict): dictionary of the markets
         timeframe (TimeFrame): TimeFrame object which tells the timeframe
+        areas (list(str)): list of the areas. Defaults to ["NO1", "NO2", "NO3", "NO4", "NO5"]. Only include one of the areas in the list if one is wanted
 
     Returns:
         Ir_hlm (matrix(float)): The income from the reserve markets for each hour, load, and market
@@ -346,7 +347,7 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
     RK_down_prices = {}
     aFRR_activation_up_volume = {}
     aFRR_activation_down_volume = {}
-    for area in ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']:
+    for area in areas:
         for hour in H:
             RK_up_prices[(area, hour)] = markets_dict["RK_up_" + area].price_data.loc[markets_dict["RK_up_" + area].price_data["Time(Local)"] == hour].values[0][1]
             RK_down_prices[(area, hour)] =  markets_dict["RK_down_" + area].price_data.loc[markets_dict["RK_down_" + area].price_data["Time(Local)"] == hour].values[0][1]
