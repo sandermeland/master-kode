@@ -64,29 +64,7 @@ areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
     
 FFR_prof_hours = [23,24, 1, 2, 3, 4, 5, 6, 7]
 
-"""def get_FFR_df(start_year, start_month, start_day, start_hour, end_year, end_month, end_day, end_hour):
-    #timeframe = pd.date_range(start="2022-01-01 00:00:00", end="2023-10-01 00:00:00", freq="H", tz = "Europe/Oslo")
-    timeframe = pd.date_range(start=pd.Timestamp(year= start_year, month= start_month, day = start_day, hour = start_hour), 
-                              end= pd.Timestamp(year = end_year, month = end_month, day = end_day, hour = end_hour), freq="H", tz = "Europe/Oslo")
-    ffr_df = pd.DataFrame(np.zeros((len(timeframe), 5)), columns= ["Time(Local)", "FFR-Flex Price [EUR/MW]", "FFR-Profil Price [EUR/MW]", "FFR-Flex Volume", "FFR-Profil Volume"])
-    # The Time(Local) column should have datetime objects starting from 01.01.2022 until 01.01.2023 with hourly values
-    ffr_df["Time(Local)"] = timeframe
-    # The FFR-Flex Price [EUR/MW] column should be 0 until 29.04.2022 and then be equal to 450 until 30.10.2022 and then be 0 again
-    ffr_df["FFR-Flex Price [EUR/MW]"] = 450 * 0.085
-    ffr_df["FFR-Profil Price [EUR/MW]"] = 150 * 0.085
-    for year in [start_year, end_year]:
-        ffr_df["FFR-Flex Price [EUR/MW]"].loc[(pd.Timestamp(year = year, month =10, day = 30, hour = 0, tz = "Europe/Oslo") < ffr_df["Time(Local)"]) & 
-                                          ( ffr_df["Time(Local)"] < pd.Timestamp(year = year, month = 4, day = 29, hour = 0, tz = "Europe/Oslo"))]  = 0
-        
-        ffr_df["FFR-Profil Price [EUR/MW]"].loc[(pd.Timestamp(year = year, month = 9, day = 3, hour = 0, tz = "Europe/Oslo") < ffr_df["Time(Local)"]) & 
-                                            (ffr_df["Time(Local)"] < pd.Timestamp(year = year, month = 5, day = 27, hour = 0, tz = "Europe/Oslo"))]  = 0
-        for date in ffr_df["Time(Local)"].loc[(pd.Timestamp(year = year, month = 10, day = 30, hour = 0, tz = "Europe/Oslo") > ffr_df["Time(Local)"]) & 
-                                          ( ffr_df["Time(Local)"] > pd.Timestamp(year = year, month = 4, day = 29, hour = 0, tz = "Europe/Oslo"))]:
-            #print(date)
-            if (date.hour > 6) & (date.hour < 22):
-                ffr_df["FFR-Flex Price [EUR/MW]"].loc[(ffr_df["Time(Local)"] == date)] = 0
-    
-    return ffr_df"""
+
     
 def get_FFR_df(start_year, start_month, start_day, start_hour, end_year, end_month, end_day, end_hour):
     timeframe = pd.date_range(start=pd.Timestamp(year=start_year, month=start_month, day=start_day, hour=start_hour, tz="Europe/Oslo"),
@@ -212,7 +190,7 @@ test = get_area_FCR_df(filtered_d_2_df, "NO4")
 test"""
 
     
-def create_FCR_dfs(fcr_d_1_path, fcr_d_2_path, start_month, year, start_day, end_month, end_day, start_hour, end_hour):
+def create_FCR_dfs(fcr_d_1_path, fcr_d_2_path, start_month, year, start_day, end_month, end_day, start_hour, end_hour, areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']):
     fcr_d_1_df_2023 = pd.read_excel(fcr_d_1_path)
     fcr_d_2_df_2023 = pd.read_excel(fcr_d_2_path)
     
@@ -221,13 +199,11 @@ def create_FCR_dfs(fcr_d_1_path, fcr_d_2_path, start_month, year, start_day, end
 
     fcr_d_1_dfs = []
     fcr_d_2_dfs = []
-    
-    areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
-    for area in areas:
-        fcr_d_1_dfs.append(get_area_FCR_df(filtered_d_1_df, area))
-        fcr_d_2_dfs.append(get_area_FCR_df(filtered_d_2_df, area))
+    for a in areas:
+        fcr_d_1_dfs.append(get_area_FCR_df(filtered_d_1_df, a))
+        fcr_d_2_dfs.append(get_area_FCR_df(filtered_d_2_df, a))
+ 
 
-        
     FCR_D_1_D_markets = []
     FCR_D_2_D_markets = []
     FCR_D_1_N_markets = []
@@ -317,10 +293,10 @@ def get_area_afrr_dfs(df, area):
     area_df = area_df.sort_values(by="Time(Local)").reset_index(drop=True)
     return area_df
 
-def create_afrr_dfs(up_directory, down_directory, year, start_month, start_day, start_hour, end_month, end_day, end_hour):
+def create_afrr_dfs(up_directory, down_directory, year, start_month, start_day, start_hour, end_month, end_day, end_hour, areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']):
     afrr_area_up_dfs = []
     afrr_area_down_dfs = []
-    areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
+    
     up_df, down_df = preprocess_afrr(up_directory = up_directory, down_directory = down_directory, year = year, start_month= start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour= start_hour, end_hour= end_hour)
     for area in areas:
         afrr_area_up_dfs.append(get_area_afrr_dfs(up_df, area))
@@ -415,18 +391,16 @@ spot_path = "../master-data/spot_data/spot_june_23.csv"
 rk_dfs_dict = preprocess_rk_dfs_dict(initialize_rk_data(rk_price_down_path, rk_price_up_path, rk_volume_down_path, rk_volume_up_path), area = "NO1", start_month = 6, year = 2023, start_day = 26, start_hour = 0, end_hour = 23, end_month = 6, end_year = 2023, end_day = 27, spot_path = spot_path)
 """
 
-def create_rk_markets(spot_path :str, price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int,  end_day : int):
+def create_rk_markets(spot_path :str, price_down_path : str, price_up_path : str, volume_down_path: str, volume_up_path : str, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int,  end_day : int, areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']):
     rk_dfs_dict = initialize_rk_data(price_down_path = price_down_path, price_up_path = price_up_path, volume_down_path = volume_down_path, volume_up_path = volume_up_path)
     rk_dicts = []
-    areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']
-
+    
     for area in areas:
         rk_dicts.append(preprocess_rk_dfs_dict(df_dict=rk_dfs_dict, area=area, year= year, end_year = year, start_month = start_month, end_month = end_month, start_day = start_day, end_day = end_day, start_hour = start_hour, end_hour = end_hour, spot_path= spot_path))
 
     RK_up_markets = []
     RK_down_markets = []
     
-
     for rk_dict, area in zip(rk_dicts, areas):
         
         RK_up_markets.append(ReserveMarket(name = "RK_up_" + area, direction = "up", area = area, capacity_market= False, response_time=60*15, duration = 60, min_volume = 5 if area == "NO1" or area == "NO3" else 10, sleep_time=0,activation_threshold=0, price_data= rk_dict["price_up"], volume_data= rk_dict["volume_up"]))
@@ -539,12 +513,11 @@ print(old_rkom.dtypes == new_rkom.dtypes)"""
 
 
 
-def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_month, start_day, start_hour, end_month, end_day, end_hour):
+def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_month, start_day, start_hour, end_month, end_day, end_hour, areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']):
     rkom_dfs = []
     for area in areas:
         rkom_dfs.append(create_standardized_RKOM_df(rkom_22_path, rkom_23_path, year = year, area= area, start_month= start_month, start_day= start_day, start_hour=start_hour, end_month=end_month, end_day= end_day, end_hour= end_hour))
-        
-
+    
     RKOM_H_up_markets = []
     RKOM_H_down_markets = []
     RKOM_B_up_markets = []
@@ -563,11 +536,12 @@ def create_RKOM_markets(rkom_22_path : str, rkom_23_path : str, year, start_mont
     return RKOM_H_up_markets, RKOM_H_down_markets, RKOM_B_up_markets, RKOM_B_down_markets
 
 # Stig Ødegaard Ottesen mente det ikke var noe problem å bruke 1 MW for RK
+
 #________________________________________RKOM SESONG_____________________________________________
 #RKOM_sesong = ReserveMarket(name = "RKOM_sesong", response_time=300, duration = 60, min_volume=10,sleep_time=0,activation_threshold=0, capacity_market= True, opening_date= datetime.datetime.strptime("2022-W44" + '-1', "%Y-W%W-%w"), end_date= datetime.datetime.strptime("2022-W17" + '-1', "%Y-W%W-%w"))
 
 #_________________________________________________________________________________________________
-def get_market_list(tf , spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : str, afrr_up_directory : str, afrr_down_directory : str, rk_price_down_path : str, rk_price_up_path : str, rk_volume_down_path: str, rk_volume_up_path : str, rkom_22_path : str, rkom_23_path : str): 
+def get_market_list(tf , spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : str, afrr_up_directory : str, afrr_down_directory : str, rk_price_down_path : str, rk_price_up_path : str, rk_volume_down_path: str, rk_volume_up_path : str, rkom_22_path : str, rkom_23_path : str, areas = ['NO1', 'NO2', 'NO3', 'NO4', 'NO5']): 
     """Function to use all the functions defined in this file to create a list of all the markets that are to be used in the optimization problem.
 
     Args:
@@ -588,10 +562,10 @@ def get_market_list(tf , spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : s
         list(ReserveMarket): list of all the possible  markets
     """
     FFR_markets = create_FFR_markets(start_year= tf.year, start_month= tf.start_month, start_day = tf.start_day, end_year = tf.year, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour)
-    FCR_D_1_D_markets, FCR_D_1_N_markets , FCR_D_2_N_markets , FCR_D_2_D_markets = create_FCR_dfs(fcr_d_1_path = fcr_d_1_path,  fcr_d_2_path = fcr_d_2_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour)
-    aFRR_up_markets, aFRR_down_markets = create_afrr_dfs(up_directory = afrr_up_directory, down_directory = afrr_down_directory, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour)
-    RK_down_markets , RK_up_markets = create_rk_markets(spot_path= spot_path, price_down_path = rk_price_down_path, price_up_path = rk_price_up_path, volume_down_path= rk_volume_down_path, volume_up_path = rk_volume_up_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, start_hour = tf.start_hour, end_hour = tf.end_hour, end_month = tf.end_month, end_day = tf.end_day)
-    RKOM_B_down_markets, RKOM_B_up_markets, RKOM_H_down_markets, RKOM_H_up_markets = create_RKOM_markets(rkom_22_path = rkom_22_path, rkom_23_path = rkom_23_path, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour)
+    FCR_D_1_D_markets, FCR_D_1_N_markets , FCR_D_2_N_markets , FCR_D_2_D_markets = create_FCR_dfs(fcr_d_1_path = fcr_d_1_path,  fcr_d_2_path = fcr_d_2_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour, areas = areas)
+    aFRR_up_markets, aFRR_down_markets = create_afrr_dfs(up_directory = afrr_up_directory, down_directory = afrr_down_directory, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour, areas = areas)
+    RK_down_markets , RK_up_markets = create_rk_markets(spot_path= spot_path, price_down_path = rk_price_down_path, price_up_path = rk_price_up_path, volume_down_path= rk_volume_down_path, volume_up_path = rk_volume_up_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, start_hour = tf.start_hour, end_hour = tf.end_hour, end_month = tf.end_month, end_day = tf.end_day, areas = areas)
+    RKOM_B_down_markets, RKOM_B_up_markets, RKOM_H_down_markets, RKOM_H_up_markets = create_RKOM_markets(rkom_22_path = rkom_22_path, rkom_23_path = rkom_23_path, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour, areas = areas)
     all_market_list = FFR_markets + FCR_D_1_D_markets + FCR_D_1_N_markets + FCR_D_2_N_markets + FCR_D_2_D_markets + aFRR_up_markets + aFRR_down_markets + RK_down_markets + RK_up_markets + RKOM_B_down_markets + RKOM_B_up_markets + RKOM_H_down_markets + RKOM_H_up_markets
 
     return all_market_list
