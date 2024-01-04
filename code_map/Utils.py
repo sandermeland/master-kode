@@ -420,7 +420,8 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
     return Ir_hlm, Ia_hlm, Va_hm
 
 def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], index = True):
-    """ function to get a dict of compatible markets for each asset
+    """ function to get a dict of compatible markets for each asset. The dict is either a dict of lists of indexes or a dict of lists of objects.
+        The function checks the response time, the area and the direction of the asset and the market to see if they are compatible
 
     Args:
         H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
@@ -451,7 +452,7 @@ def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.Reser
             compatible_dict[market] = asset_list
     return compatible_dict
 
-def run_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, dominant_directions : list, compatible_list : dict, log_filename : str, model_name : str):
+def run_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, compatible_list : dict, log_filename : str, model_name : str):
     """ Function to create and run an optimization model for bidding in the reserve markets for a given set of meters and markets. The bidding is for historical data
 
     Args:
@@ -482,6 +483,9 @@ def run_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.Reser
     """
     # Create a new model
     model = gp.Model(model_name)
+    model.setParam('OutputFlag', 1)
+    model.setParam('LogFile', log_filename)
+
     # Create decision variables
     x = {}
     d = {}
@@ -564,17 +568,32 @@ def run_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.Reser
             for l in range(len(L)):
                 model.addConstr(x[h,l,m] * R_h_l[h,l] <= R_m[m] * y[h,m], f"response_time_for_hour_{h}_market_{m}")
                 
-    # Enable logging
-    model.setParam('LogFile', log_filename)
+    model.optimize(callback_factory(log_filename))
 
-    # Solve the model
-    model.optimize()
-        
     if model.status == gp.GRB.Status.INFEASIBLE:
         model.computeIIS()
         
         
     return model, x, y, w, d   
+
+def callback_factory(log_filename):
+    def optimized_callback(model, where):
+        with open(log_filename, 'a') as log_file:
+            if where == gp.GRB.Callback.MIP:
+                objbst = model.cbGet(gp.GRB.Callback.MIP_OBJBST)
+                objbnd = model.cbGet(gp.GRB.Callback.MIP_OBJBND)
+                if objbst < gp.GRB.INFINITY:
+                    log_entry = f"Current best objective: {objbst}, Best bound: {objbnd}\n"
+                    print(log_entry, end='')
+                    log_file.write(log_entry)
+                    log_file.flush()
+
+            elif where == gp.GRB.Callback.MESSAGE:
+                msg = model.cbGet(gp.GRB.Callback.MSG_STRING)
+                print(msg.strip(), end='')
+                log_file.write(msg)
+                log_file.flush()
+    return optimized_callback
 
 
 def run_optimization_model_no_numpy(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, compatible_list : dict, log_filename : str, model_name : str):
@@ -701,6 +720,72 @@ def run_optimization_model_no_numpy(L : [new_meters.PowerMeter], M : [final_mark
         
         
     return model, x, y, w, d  
+
+import math
+
+def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, compatible_list : dict, log_filename : str, model_name : str):
+    """ Function to create and run an optimization model for bidding in the reserve markets for a given set of meters and markets. 
+    The bidding is for historical data. The model is run in batches to avoid memory issues. Therefore the H list is splitted in to batches of 24 hours. So the model is run for each batch
+
+    Args:
+        L (list(new_meters.PowerMeter]): set of all meters
+        M (list(final_markets.ReserveMarket]): set of all markets
+        H (list(pd.Timestamp]): set of all hours
+        F (dict): Dictionary to find the activation percentages for each market and hour
+        Ir_hlm (dict): Dictionary to find the reservation income from the reserve markets for each hour, load, and market
+        Ia_hlm (dict): Dictionary to find the activation income from the markets for each hour, load, and market
+        Va_hm (dict): Dictionary to find the activation volume from the markets for each hour and market
+        Vp_h_m (dict): The volume for each hour and market
+        Vm_m (list): Minimum volume for each market
+        R_m (list): Response time for each market
+        R_h_l (np.array): Response time for each load each hour
+        Fu_h_l (np.array): Up flex volume for each load that are compatible with up markets for each hour 
+        Fd_h_l (np.array): Down flex volume for each load that are compatible with down markets for each hour
+        compatible_list (dict): dict of compatible markets for each asset
+        log_filename (str): name of the logfile
+        model_name (str): name of the model
+
+    Returns:
+        aggregated_results (dict): The results from the batched optimization model which includes the model, the decision variables and the values of the decision variables
+            model (gp.Model): The model that was run
+            x (dict): The decision variables x[h,l,m] which tells if asset l is connected to market m at hour h
+            y (dict): The decision variables y[h,m] which tells if market m has a bid at hour h
+            w (dict): The decision variables w[h,m] which tells if market m is activated at hour h
+            d (dict): The decision variables d[h,l,m] which tells if asset l is compatible with market m at hour h
+    """
+    batch_size = 24  # For example, batching by 24 hours
+    num_batches = math.ceil(len(H) / batch_size)
+    aggregated_results = {
+        'models': [],
+        'x_values': [],
+        'y_values': [],
+        'w_values': [],
+        'd_values': []
+    }
+
+    for b in range(num_batches):
+        # Determine the subset of hours for this batch
+        start_index = b * batch_size
+        end_index = min((b + 1) * batch_size, len(H))
+        batch_H = H[start_index:end_index]
+
+        # Slice numpy arrays for the current batch
+        batch_R_h_l = R_h_l[start_index:end_index, :]
+        batch_Fu_h_l = Fu_h_l[start_index:end_index, :]
+        batch_Fd_h_l = Fd_h_l[start_index:end_index, :]
+
+        # Run the optimization model for this batch
+        model, x, y, w, d = run_optimization_model(L, M, batch_H, F, Ir_hlm, Ia_hlm, Va_hm, Vp_h_m, Vm_m, R_m, batch_R_h_l, batch_Fu_h_l, batch_Fd_h_l, compatible_list, log_filename, f"{model_name}_batch_{b}")
+        # Store results
+        aggregated_results['models'].append(model)
+        aggregated_results['x_values'].append(x)
+        aggregated_results['y_values'].append(y)
+        aggregated_results['w_values'].append(w)
+        aggregated_results['d_values'].append(d)
+
+
+    # Process aggregated_results as needed
+    return aggregated_results
 
 def test_solution_validity(x : dict, y : dict, w : dict, Va_hm : dict, L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], dominant_directions : [str], F : dict):
     """ function to test the validity of the solution provided by a solver
