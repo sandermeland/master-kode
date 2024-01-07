@@ -7,6 +7,8 @@ import pytz
 from code_map import final_markets, new_meters, timeframes
 import gurobipy as gp
 import pickle
+import math
+
 
 
 # will have to add a constraint for timeframe
@@ -73,7 +75,7 @@ def find_frequency_quarters(freq_df : pd.DataFrame, hours : [pd.Timestamp], inde
             average_freq_dict[hour] = average_freqs
     return average_freq_dict
     
-tf = timeframes.one_day
+"""tf = timeframes.one_day
 hours = pd.date_range(start = pd.Timestamp(year = tf.year, month= tf.start_month, day=tf.start_day, hour= tf.start_hour, tz = "Europe/Oslo"), end = pd.Timestamp(year = tf.year, month= tf.end_month, day=tf.end_day, hour= tf.end_hour, tz = "Europe/Oslo"), freq = 'H', tz = "Europe/Oslo")
 
 average_freq_dict = find_frequency_quarters(freq_df = freq_data, hours = hours)
@@ -83,7 +85,7 @@ sum(average_freq_dict[0])
 
 10 * 2 * (200 - sum(average_freq_dict[0]))
 
-2000 * 2 -10* 2* sum(average_freq_dict[0])
+2000 * 2 -10* 2* sum(average_freq_dict[0])"""
 
 
 def get_FCR_N_percentages(freq_df : pd.DataFrame, hours : timeframes.TimeFrame, markets : [final_markets.ReserveMarket]):
@@ -721,7 +723,6 @@ def run_optimization_model_no_numpy(L : [new_meters.PowerMeter], M : [final_mark
         
     return model, x, y, w, d  
 
-import math
 
 def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, Ir_hlm : dict, Ia_hlm : dict, Va_hm : dict, Vp_h_m : dict, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, compatible_list : dict, log_filename : str, model_name : str):
     """ Function to create and run an optimization model for bidding in the reserve markets for a given set of meters and markets. 
