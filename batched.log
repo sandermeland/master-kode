@@ -1,0 +1,501 @@
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Sat Jan  6 15:43:57 2024
+
+Set parameter LogFile to value "batched.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+
+CPU model: Apple M1
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+
+Optimize a model with 6573432 rows, 3260208 columns and 20661508 nonzeros
+Optimize a model with 6573432 rows, 3260208 columns and 20661508 nonzeros
+Model fingerprint: 0x7260d72b
+Model fingerprint: 0x7260d72b
+Model has 153524 quadratic objective terms
+Model has 153524 quadratic objective terms
+Model has 1728 quadratic constraints
+Model has 1728 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 8e-01]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [4e-07, 6e+01]
+  Objective range  [4e-07, 6e+01]
+  QObjective range [3e-07, 5e+01]
+  QObjective range [3e-07, 5e+01]
+  Bounds range     [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Found heuristic solution: objective -0.0000000
+Presolve removed 3008701 rows and 1352389 columns (presolve time = 5s) ...
+Presolve removed 3008701 rows and 1352389 columns (presolve time = 5s) ...
+Presolve removed 6490456 rows and 1717755 columns (presolve time = 12s) ...
+Presolve removed 6490456 rows and 1717755 columns (presolve time = 12s) ...
+Presolve removed 6490456 rows and 1717755 columns
+Presolve removed 6490456 rows and 1717755 columns
+Presolve time: 11.53s
+Presolve time: 11.53s
+Presolved: 100040 rows, 1550985 columns, 437083 nonzeros
+Presolved: 100040 rows, 1550985 columns, 437083 nonzeros
+Variable types: 0 continuous, 1550985 integer (1550985 binary)
+Variable types: 0 continuous, 1550985 integer (1550985 binary)
+Found heuristic solution: objective 3026.1079931
+Found heuristic solution: objective 3026.1079931
+Current best objective: 3026.107993097509, Best bound: 7412.160641306217
+Current best objective: 3026.107993097509, Best bound: 7412.160641306217
+
+
+Root simplex log...
+Root simplex log...
+
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.0831721e+03   8.488450e-01   0.000000e+00     24s
+       0    3.0831721e+03   8.488450e-01   0.000000e+00     24s
+      51    3.0814744e+03   0.000000e+00   0.000000e+00     24s
+      51    3.0814744e+03   0.000000e+00   0.000000e+00     24s
+
+
+Root relaxation: objective 3.081474e+03, 51 iterations, 0.01 seconds (0.00 work units)
+Root relaxation: objective 3.081474e+03, 51 iterations, 0.01 seconds (0.00 work units)
+Current best objective: 3026.107993097509, Best bound: 3081.4744330975086
+
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+
+     0     0 3081.47443    0    2 3026.10799 3081.47443  1.83%     -   23s
+     0     0 3081.47443    0    2 3026.10799 3081.47443  1.83%     -   23s
+H    0     0                    3081.4744271 3081.47443  0.00%     -   25s
+H    0     0                    3081.4744271 3081.47443  0.00%     -   25s
+
+
+Explored 1 nodes (51 simplex iterations) in 26.20 seconds (11.93 work units)
+Explored 1 nodes (51 simplex iterations) in 26.20 seconds (11.93 work units)
+Thread count was 8 (of 8 available processors)
+Thread count was 8 (of 8 available processors)
+
+
+Solution count 3: 3081.47 3026.11 -0 
+Solution count 3: 3081.47 3026.11 -0 
+
+
+Optimal solution found (tolerance 1.00e-04)
+Optimal solution found (tolerance 1.00e-04)
+Warning: max constraint violation (1.0000e-06) exceeds tolerance
+Warning: max constraint violation (1.0000e-06) exceeds tolerance
+Best objective 3.081474427098e+03, best bound 3.081474433098e+03, gap 0.0000%
+Best objective 3.081474427098e+03, best bound 3.081474433098e+03, gap 0.0000%
+
+
+User-callback calls 2814, time in user-callback 0.29 sec
+User-callback calls 2814, time in user-callback 0.29 sec
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Sat Jan  6 15:54:17 2024
+
+Set parameter LogFile to value "batched.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+
+CPU model: Apple M1
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+
+Optimize a model with 6573432 rows, 3260208 columns and 20564668 nonzeros
+Optimize a model with 6573432 rows, 3260208 columns and 20564668 nonzeros
+Model fingerprint: 0x6a246d16
+Model fingerprint: 0x6a246d16
+Model has 153524 quadratic objective terms
+Model has 153524 quadratic objective terms
+Model has 1728 quadratic constraints
+Model has 1728 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 8e-01]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [4e-07, 6e+01]
+  Objective range  [4e-07, 6e+01]
+  QObjective range [3e-07, 5e+01]
+  QObjective range [3e-07, 5e+01]
+  Bounds range     [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Found heuristic solution: objective -0.0000000
+Presolve removed 4323683 rows and 1054434 columns (presolve time = 5s) ...
+Presolve removed 4323683 rows and 1054434 columns (presolve time = 5s) ...
+Presolve removed 6473744 rows and 1743421 columns (presolve time = 11s) ...
+Presolve removed 6473744 rows and 1743421 columns (presolve time = 11s) ...
+Presolve removed 6473744 rows and 1743421 columns
+Presolve removed 6473744 rows and 1743421 columns
+Presolve time: 11.02s
+Presolve time: 11.02s
+Presolved: 114636 rows, 1524261 columns, 467384 nonzeros
+Presolved: 114636 rows, 1524261 columns, 467384 nonzeros
+Variable types: 0 continuous, 1524261 integer (1524261 binary)
+Variable types: 0 continuous, 1524261 integer (1524261 binary)
+Found heuristic solution: objective 2844.0015880
+Found heuristic solution: objective 2844.0015880
+Current best objective: 2844.0015879742614, Best bound: 6859.048297795263
+Current best objective: 2844.0015879742614, Best bound: 6859.048297795263
+
+
+Root simplex log...
+Root simplex log...
+
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.9792576e+03   1.364258e+03   0.000000e+00     28s
+       0    2.9792576e+03   1.364258e+03   0.000000e+00     28s
+     540    2.9773019e+03   0.000000e+00   0.000000e+00     28s
+     540    2.9773019e+03   0.000000e+00   0.000000e+00     28s
+
+
+Root relaxation: objective 2.977302e+03, 540 iterations, 0.01 seconds (0.01 work units)
+Root relaxation: objective 2.977302e+03, 540 iterations, 0.01 seconds (0.01 work units)
+Total elapsed time = 28.46s (DegenMoves)
+Total elapsed time = 28.46s (DegenMoves)
+Current best objective: 2844.0015879742614, Best bound: 2977.301899924881
+
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+
+     0     0 2977.30190    0   11 2844.00159 2977.30190  4.69%     -   28s
+     0     0 2977.30190    0   11 2844.00159 2977.30190  4.69%     -   28s
+H    0     0                    2975.6534606 2977.30190  0.06%     -   29s
+H    0     0                    2975.6534606 2977.30190  0.06%     -   29s
+H    0     0                    2975.6557652 2977.30190  0.06%     -   30s
+H    0     0                    2975.6557652 2977.30190  0.06%     -   30s
+H    0     0                    2976.7352892 2977.30190  0.02%     -   32s
+H    0     0                    2976.7352892 2977.30190  0.02%     -   32s
+H    0     0                    2976.7772838 2977.30190  0.02%     -   34s
+H    0     0                    2976.7772838 2977.30190  0.02%     -   34s
+Current best objective: 2976.7772837600514, Best bound: 2977.301899924881
+Current best objective: 2976.7772837600514, Best bound: 2977.297138579467
+     0     0 2977.29714    0   58 2976.77728 2977.29714  0.02%     -   34s
+     0     0 2977.29714    0   58 2976.77728 2977.29714  0.02%     -   34s
+Current best objective: 2976.7772837600514, Best bound: 2977.297138579467
+Current best objective: 2976.7772837600514, Best bound: 2977.297138579467
+H    0     0                    2976.8084140 2977.29714  0.02%     -   36s
+H    0     0                    2976.8084140 2977.29714  0.02%     -   36s
+Current best objective: 2976.808414024056, Best bound: 2977.297138579467
+Current best objective: 2976.808414024056, Best bound: 2977.297138579467
+     0     0 2977.29664    0    4 2976.80841 2977.29664  0.02%     -   39s
+     0     0 2977.29664    0    4 2976.80841 2977.29664  0.02%     -   39s
+Current best objective: 2976.808414024056, Best bound: 2977.296642103461
+H    0     0                    2977.2786042 2977.29664  0.00%     -   41s
+H    0     0                    2977.2786042 2977.29664  0.00%     -   41s
+
+
+Explored 1 nodes (1372 simplex iterations) in 43.06 seconds (15.76 work units)
+Explored 1 nodes (1372 simplex iterations) in 43.06 seconds (15.76 work units)
+Thread count was 8 (of 8 available processors)
+Thread count was 8 (of 8 available processors)
+
+
+Solution count 10: 2977.28 2976.81 2976.79 ... -0
+Solution count 10: 2977.28 2976.81 2976.79 ... -0
+
+
+Optimal solution found (tolerance 1.00e-04)
+Optimal solution found (tolerance 1.00e-04)
+Warning: max constraint violation (1.0000e-06) exceeds tolerance
+Warning: max constraint violation (1.0000e-06) exceeds tolerance
+Best objective 2.977278604204e+03, best bound 2.977296642103e+03, gap 0.0006%
+Best objective 2.977278604204e+03, best bound 2.977296642103e+03, gap 0.0006%
+
+
+User-callback calls 2638, time in user-callback 0.28 sec
+User-callback calls 2638, time in user-callback 0.28 sec
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Sat Jan  6 16:02:32 2024
+
+Set parameter LogFile to value "batched.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+
+CPU model: Apple M1
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+
+Optimize a model with 6573432 rows, 3260208 columns and 20676880 nonzeros
+Optimize a model with 6573432 rows, 3260208 columns and 20676880 nonzeros
+Model fingerprint: 0xa16eb35b
+Model fingerprint: 0xa16eb35b
+Model has 153524 quadratic objective terms
+Model has 153524 quadratic objective terms
+Model has 1728 quadratic constraints
+Model has 1728 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 8e-01]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [4e-07, 6e+01]
+  Objective range  [4e-07, 6e+01]
+  QObjective range [3e-07, 5e+01]
+  QObjective range [3e-07, 5e+01]
+  Bounds range     [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Found heuristic solution: objective -0.0000000
+Presolve removed 2367947 rows and 1012011 columns (presolve time = 5s) ...
+Presolve removed 2367947 rows and 1012011 columns (presolve time = 5s) ...
+Presolve removed 6466716 rows and 1698907 columns (presolve time = 11s) ...
+Presolve removed 6466716 rows and 1698907 columns (presolve time = 11s) ...
+Presolve removed 6466716 rows and 1698907 columns
+Presolve removed 6466716 rows and 1698907 columns
+Presolve time: 10.70s
+Presolve time: 10.70s
+Presolved: 122972 rows, 1569429 columns, 503361 nonzeros
+Presolved: 122972 rows, 1569429 columns, 503361 nonzeros
+Variable types: 0 continuous, 1569429 integer (1569429 binary)
+Variable types: 0 continuous, 1569429 integer (1569429 binary)
+Found heuristic solution: objective 2736.6058665
+Found heuristic solution: objective 2736.6058665
+Current best objective: 2736.605866472416, Best bound: 7000.629170691997
+Current best objective: 2736.605866472416, Best bound: 7000.629170691997
+
+
+Root simplex log...
+Root simplex log...
+
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.8299397e+03   1.453030e+03   0.000000e+00     24s
+       0    2.8299397e+03   1.453030e+03   0.000000e+00     24s
+     296    2.8259057e+03   0.000000e+00   0.000000e+00     24s
+     296    2.8259057e+03   0.000000e+00   0.000000e+00     24s
+
+
+Root relaxation: objective 2.825906e+03, 296 iterations, 0.01 seconds (0.00 work units)
+Root relaxation: objective 2.825906e+03, 296 iterations, 0.01 seconds (0.00 work units)
+Current best objective: 2736.605866472416, Best bound: 2825.905696072829
+
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+
+     0     0 2825.90570    0    2 2736.60587 2825.90570  3.26%     -   23s
+     0     0 2825.90570    0    2 2736.60587 2825.90570  3.26%     -   23s
+H    0     0                    2825.9046590 2825.90570  0.00%     -   25s
+H    0     0                    2825.9046590 2825.90570  0.00%     -   25s
+
+
+Explored 1 nodes (296 simplex iterations) in 26.19 seconds (13.42 work units)
+Explored 1 nodes (296 simplex iterations) in 26.19 seconds (13.42 work units)
+Thread count was 8 (of 8 available processors)
+Thread count was 8 (of 8 available processors)
+
+
+Solution count 3: 2825.9 2736.61 -0 
+Solution count 3: 2825.9 2736.61 -0 
+
+
+Optimal solution found (tolerance 1.00e-04)
+Optimal solution found (tolerance 1.00e-04)
+Best objective 2.825904658999e+03, best bound 2.825905696073e+03, gap 0.0000%
+Best objective 2.825904658999e+03, best bound 2.825905696073e+03, gap 0.0000%
+
+
+User-callback calls 2565, time in user-callback 0.23 sec
+User-callback calls 2565, time in user-callback 0.23 sec
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Sat Jan  6 16:11:01 2024
+
+Set parameter LogFile to value "batched.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+
+CPU model: Apple M1
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+
+Optimize a model with 6573432 rows, 3260208 columns and 21089992 nonzeros
+Optimize a model with 6573432 rows, 3260208 columns and 21089992 nonzeros
+Model fingerprint: 0xd04eeb44
+Model fingerprint: 0xd04eeb44
+Model has 153524 quadratic objective terms
+Model has 153524 quadratic objective terms
+Model has 1728 quadratic constraints
+Model has 1728 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 9e-01]
+  QMatrix range    [1e-06, 9e-01]
+  Objective range  [4e-07, 6e+01]
+  Objective range  [4e-07, 6e+01]
+  QObjective range [3e-07, 5e+01]
+  QObjective range [3e-07, 5e+01]
+  Bounds range     [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Found heuristic solution: objective -0.0000000
+Presolve removed 2125959 rows and 882008 columns (presolve time = 6s) ...
+Presolve removed 2125959 rows and 882008 columns (presolve time = 6s) ...
+Presolve removed 6462461 rows and 1547173 columns (presolve time = 10s) ...
+Presolve removed 6462461 rows and 1547173 columns (presolve time = 10s) ...
+Presolve removed 6462461 rows and 1547173 columns
+Presolve removed 6462461 rows and 1547173 columns
+Presolve time: 10.25s
+Presolve time: 10.25s
+Presolved: 122767 rows, 1718933 columns, 512880 nonzeros
+Presolved: 122767 rows, 1718933 columns, 512880 nonzeros
+Variable types: 0 continuous, 1718933 integer (1718933 binary)
+Variable types: 0 continuous, 1718933 integer (1718933 binary)
+Found heuristic solution: objective 3055.0586919
+Found heuristic solution: objective 3055.0586919
+Current best objective: 3055.0586918752724, Best bound: 6936.244274094061
+Current best objective: 3055.0586918752724, Best bound: 6936.244274094061
+
+
+Root simplex log...
+Root simplex log...
+
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.1215042e+03   9.290650e-01   0.000000e+00     26s
+       0    3.1215042e+03   9.290650e-01   0.000000e+00     26s
+     174    3.1210113e+03   0.000000e+00   0.000000e+00     26s
+     174    3.1210113e+03   0.000000e+00   0.000000e+00     26s
+
+
+Root relaxation: objective 3.121011e+03, 174 iterations, 0.01 seconds (0.01 work units)
+Root relaxation: objective 3.121011e+03, 174 iterations, 0.01 seconds (0.01 work units)
+Current best objective: 3055.0586918752724, Best bound: 3121.0112815752723
+
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+
+     0     0 3121.01128    0    2 3055.05869 3121.01128  2.16%     -   25s
+     0     0 3121.01128    0    2 3055.05869 3121.01128  2.16%     -   25s
+H    0     0                    3120.1904399 3121.01128  0.03%     -   27s
+H    0     0                    3120.1904399 3121.01128  0.03%     -   27s
+H    0     0                    3120.9546999 3121.01128  0.00%     -   28s
+H    0     0                    3120.9546999 3121.01128  0.00%     -   28s
+
+
+Explored 1 nodes (174 simplex iterations) in 29.24 seconds (15.10 work units)
+Explored 1 nodes (174 simplex iterations) in 29.24 seconds (15.10 work units)
+Thread count was 8 (of 8 available processors)
+Thread count was 8 (of 8 available processors)
+
+
+Solution count 4: 3120.95 3120.19 3055.06 -0 
+Solution count 4: 3120.95 3120.19 3055.06 -0 
+
+
+Optimal solution found (tolerance 1.00e-04)
+Optimal solution found (tolerance 1.00e-04)
+Best objective 3.120954699875e+03, best bound 3.121011281575e+03, gap 0.0018%
+Best objective 3.120954699875e+03, best bound 3.121011281575e+03, gap 0.0018%
+
+
+User-callback calls 2496, time in user-callback 0.21 sec
+User-callback calls 2496, time in user-callback 0.21 sec
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Sat Jan  6 16:18:55 2024
+
+Set parameter LogFile to value "batched.log"
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+Gurobi Optimizer version 11.0.0 build v11.0.0rc2 (mac64[rosetta2] - Darwin 23.1.0 23B92)
+
+
+CPU model: Apple M1
+CPU model: Apple M1
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+Thread count: 8 physical cores, 8 logical processors, using up to 8 threads
+
+
+Optimize a model with 6573432 rows, 3260208 columns and 21115084 nonzeros
+Optimize a model with 6573432 rows, 3260208 columns and 21115084 nonzeros
+Model fingerprint: 0xe815a356
+Model fingerprint: 0xe815a356
+Model has 153524 quadratic objective terms
+Model has 153524 quadratic objective terms
+Model has 1728 quadratic constraints
+Model has 1728 quadratic constraints
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Variable types: 0 continuous, 3260208 integer (3260208 binary)
+Coefficient statistics:
+Coefficient statistics:
+  Matrix range     [1e-06, 2e+03]
+  Matrix range     [1e-06, 2e+03]
+  QMatrix range    [1e-06, 8e-01]
+  QMatrix range    [1e-06, 8e-01]
+  Objective range  [4e-07, 6e+01]
+  Objective range  [4e-07, 6e+01]
+  QObjective range [3e-07, 5e+01]
+  QObjective range [3e-07, 5e+01]
+  Bounds range     [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+  QRHS range       [1e+00, 1e+02]
+  QRHS range       [1e+00, 1e+02]
+Found heuristic solution: objective -0.0000000
+Found heuristic solution: objective -0.0000000
+Presolve removed 2094764 rows and 865175 columns (presolve time = 5s) ...
+Presolve removed 2094764 rows and 865175 columns (presolve time = 5s) ...
