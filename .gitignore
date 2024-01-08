@@ -1,6 +1,8 @@
 myenv/
 *.zip
 *.pkl
+*.log
+
 
 
 
