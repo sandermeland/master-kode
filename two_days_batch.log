@@ -238,3 +238,7 @@ Best objective 5.724219802501e+03, best bound 5.724259890062e+03, gap 0.0007%
 
 User-callback calls 2438, time in user-callback 0.26 sec
 User-callback calls 2438, time in user-callback 0.26 sec
+
+Gurobi 11.0.0 (mac64[rosetta2]) logging started Mon Jan  8 10:27:14 2024
+
+Set parameter LogFile to value "two_days_batch.log"
