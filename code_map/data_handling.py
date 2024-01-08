@@ -5,6 +5,33 @@ import numpy as np
 
 
 def save_collections(L,M,F,H,freq_data,power_meter_dict,consumption_data,L_u,L_d,Fu_h_l,Fd_h_l,R_h_l,P_h_m,Vp_h_m,Vm_m,R_m,dominant_directions,Ir_hlm,Ia_hlm,Va_hm,compatible_list, pkl_filename):
+    """ A function to store values to a pickle file. The pickle file can later be used to load the collections and this should be way faster than creating the collections from scratch.
+
+    Args:
+        L (_type_): _description_
+        M (_type_): _description_
+        F (_type_): _description_
+        H (_type_): _description_
+        freq_data (_type_): _description_
+        power_meter_dict (_type_): _description_
+        consumption_data (_type_): _description_
+        L_u (_type_): _description_
+        L_d (_type_): _description_
+        Fu_h_l (_type_): _description_
+        Fd_h_l (_type_): _description_
+        R_h_l (_type_): _description_
+        P_h_m (_type_): _description_
+        Vp_h_m (_type_): _description_
+        Vm_m (_type_): _description_
+        R_m (_type_): _description_
+        dominant_directions (_type_): _description_
+        Ir_hlm (_type_): _description_
+        Ia_hlm (_type_): _description_
+        Va_hm (_type_): _description_
+        compatible_list (_type_): _description_
+        pkl_filename (_type_): _description_
+
+    """
     collection_list = [L, M, F, H, freq_data, power_meter_dict, consumption_data, L_u, L_d, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m, dominant_directions, Ir_hlm, Ia_hlm, Va_hm, compatible_list]
     name_list = ["L", "M", "F", "H", "freq_data", "power_meter_dict", "consumption_data", "L_u", "L_d", "Fu_h_l", "Fd_h_l", "R_h_l", "P_h_m", "Vp_h_m", "Vm_m", "R_m", "dominant_directions", "Ir_hlm", "Ia_hlm", "Va_hm", "compatible_list"]
     # Assuming your collections are named collection1, collection2, ..., collection12
@@ -15,6 +42,16 @@ def save_collections(L,M,F,H,freq_data,power_meter_dict,consumption_data,L_u,L_d
     return None
 
 def load_collections(load_path):
+    """ A function to load all the collections from a pickle file. This should be way faster than creating the collections from scratch.
+    This is the correct order for the collections:
+    L, M, F, H, freq_data, power_meter_dict, consumption_data, L_u, L_d, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m, dominant_directions, Ir_hlm, Ia_hlm, Va_hm, compatible_list
+
+    Args:
+        load_path (str): path to the pickle file where the wanted collections are stored
+
+    Returns:
+        _type_: _description_
+    """
     with open(load_path, 'rb') as file:
         loaded_collections = pickle.load(file)
 
