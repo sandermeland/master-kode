@@ -1,10 +1,8 @@
 import pandas as pd
 import numpy as np
-import calendar 
 from datetime import datetime
-import pytz
-import openpyxl
 from dataclasses import dataclass
+import sklearn
 
 
 """
@@ -34,7 +32,7 @@ class ReserveMarket:
     price_data: pd.DataFrame # dataframe with columns "Time(Local)" and "Price EUR/MW"
     direction: str  # 'up', 'down', or 'both'
     area: str # NO1, NO2, NO3, NO4, NO5, or 'all'
-    activation_price: pd.DataFrame = pd.DataFrame() # dataframe with columns "Time(Local)" and "Price EUR/MW"
+    #activation_price: pd.DataFrame # dataframe with columns "Time(Local)" and "Price EUR/MW"
     sleep_time: int = 60  # minutes, default is 60
     activation_threshold: float = 0  # frequency, default is 0
     capacity_market: bool = True  # indicates if the market is a capacity market, default is True
@@ -48,6 +46,24 @@ class ReserveMarket:
     def __hash__(self):
         return hash(self.name)
 
+
+def preprocess_spot_data(df : pd.DataFrame, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_day : int, area : str, normalize : bool = False):
+    start_date = pd.Timestamp(year, start_month, start_day, start_hour).tz_localize('Europe/Oslo')
+    end_date = pd.Timestamp(year, end_month, end_day, end_hour).tz_localize('Europe/Oslo')
+    df_copy = df.copy()
+    if normalize:
+        scaler = sklearn.preprocessing.MinMaxScaler()
+        df_copy["settlement"] = scaler.fit_transform(df_copy[["settlement"]])
+    df_copy["start_time"] = pd.to_datetime(df_copy["start_time"])
+    df_copy["start_time"] = df_copy["start_time"].dt.tz_convert('Europe/Oslo')
+   
+    df_copy = df_copy.loc[(df_copy["start_time"] >= start_date) & (df_copy["start_time"] <= end_date)]
+    df_copy.rename(columns={'start_time':'Time(Local)'}, inplace=True)
+    df_copy.sort_values(by=['Time(Local)', "delivery_area"], inplace=True)
+    # remove duplicates
+    df_copy.drop_duplicates(subset=['Time(Local)', "delivery_area", "settlement"], inplace=True)
+        
+    return df_copy.loc[df_copy["delivery_area"] == area].reset_index(drop=True)
 
 #________________________________Global variables____________________________________
 """version_variables = Inputs.one_day
@@ -327,20 +343,6 @@ def initialize_rk_data(price_down_path : str, price_up_path : str, volume_down_p
     rk_price_up.drop(columns = ["currency"], inplace=True)
 
     return {"price_down" : rk_price_down,"price_up" : rk_price_up,"volume_up" : rk_volume_up,"volume_down" : rk_volume_down}
-
-def preprocess_spot_data(df : pd.DataFrame, start_month : int, year : int, start_day : int, start_hour : int, end_hour : int, end_month : int, end_day : int, area : str):
-    start_date = pd.Timestamp(year, start_month, start_day, start_hour).tz_localize('Europe/Oslo')
-    end_date = pd.Timestamp(year, end_month, end_day, end_hour).tz_localize('Europe/Oslo')
-    df_copy = df.copy()
-    df_copy["start_time"] = pd.to_datetime(df_copy["start_time"])
-    df_copy["start_time"] = df_copy["start_time"].dt.tz_convert('Europe/Oslo')
-   
-    df_copy = df_copy.loc[(df_copy["start_time"] >= start_date) & (df_copy["start_time"] <= end_date)]
-    df_copy.rename(columns={'start_time':'Time(Local)'}, inplace=True)
-    df_copy.sort_values(by=['Time(Local)', "delivery_area"], inplace=True)
-    # remove duplicates
-    df_copy.drop_duplicates(subset=['Time(Local)', "delivery_area", "settlement"], inplace=True)
-    return df_copy.loc[df_copy["delivery_area"] == area].reset_index(drop=True)
 
 
 def preprocess_rk_dfs_dict(df_dict: dict, area: str, start_month: int, year: int, start_day: int, start_hour: int, end_hour: int, end_month: int, end_year: int, end_day: int, spot_path):
