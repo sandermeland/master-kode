@@ -779,17 +779,15 @@ def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_marke
         # the income
         batch_Ir_hlm, batch_Ia_hlm, batch_Va_hm = get_income_dictionaries(H = batch_H, M = M, L =L, freq_data = freq_data, Fu_h_l = batch_Fu_h_l, Fd_h_l = batch_Fd_h_l, P_h_m = batch_P_h_m, Vp_h_m = batch_Vp_h_m, F =F, markets_dict = market_name_dict, timeframe = tf)
        
-
         # Run the optimization model for this batch
-        _, x, y, w, d = run_optimization_model(L= L, M= M, H = batch_H,F= F, Ir_hlm= batch_Ir_hlm, Ia_hlm= batch_Ia_hlm, Va_hm= batch_Va_hm, Vp_h_m= batch_Vp_h_m, Vm_m=Vm_m, R_m=R_m, R_h_l=batch_R_h_l, Fu_h_l=batch_Fu_h_l, Fd_h_l=batch_Fd_h_l, compatible_list=compatible_list, log_filename=log_filename, model_name=f"{model_name}_batch_{b}")
+        _, x, y, w, _ = run_optimization_model(L= L, M= M, H = batch_H,F= F, Ir_hlm= batch_Ir_hlm, Ia_hlm= batch_Ia_hlm, Va_hm= batch_Va_hm, Vp_h_m= batch_Vp_h_m, Vm_m=Vm_m, R_m=R_m, R_h_l=batch_R_h_l, Fu_h_l=batch_Fu_h_l, Fd_h_l=batch_Fd_h_l, compatible_list=compatible_list, log_filename=log_filename, model_name=f"{model_name}_batch_{b}")
         # Store results
         #aggregated_results['models'].append(model)
         aggregated_results['x_values'].append(x)
         aggregated_results['y_values'].append(y)
         aggregated_results['w_values'].append(w)
-        aggregated_results['d_values'].append(d)
+        #aggregated_results['d_values'].append(d)
         test_solution_validity(x, y, w, batch_Va_hm, L, M, batch_H, F)
-
 
     # Process aggregated_results as needed
     return aggregated_results
@@ -887,7 +885,7 @@ def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMet
     for h, hour in enumerate(H):
         for l, load in enumerate(L):
             for m, market in enumerate(M):
-                if x[h, l, m] > 0.5:
+                if x[h, l, m].X > 0.5:
                     # Calculate flex volume for this asset, market, and hour
         
                     data.append([hour, load.meter_id, market.name])
@@ -904,14 +902,14 @@ def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMet
             m = market_names.index(market_name)
             market = M[m]
             if market.direction == "up":
-                total_flex_volume = sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")
+                total_flex_volume = sum(x[h, l, m].X * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")
             elif market.direction == "down":
-                total_flex_volume = sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
+                total_flex_volume = sum(x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
             else:
                 if dominant_directions[h] == "up":
-                    total_flex_volume = sum(x[h, l, m] * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")
+                    total_flex_volume = sum(x[h, l, m].X * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")
                 else:
-                    total_flex_volume = sum(x[h, l, m] * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
+                    total_flex_volume = sum(x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
                 
             flex_volumes.append(total_flex_volume)
         market_count["Total Flex Volume"] = flex_volumes
