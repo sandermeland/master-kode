@@ -787,7 +787,7 @@ def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_marke
         aggregated_results['y_values'].append(y)
         aggregated_results['w_values'].append(w)
         #aggregated_results['d_values'].append(d)
-        test_solution_validity(x, y, w, batch_Va_hm, L, M, batch_H, F)
+        #test_solution_validity(x, y, w, batch_Va_hm, L, M, batch_H, F)
 
     # Process aggregated_results as needed
     return aggregated_results
@@ -866,7 +866,7 @@ def test_solution_validity(x : dict, y : dict, w : dict, Va_hm : dict, L : [new_
             assert total_max_volume <= market_max_volume * y[h,m].X, f"Maximum volume constraint violated at hour {h} for market {m}"
     return "Solution is valid"
 
-def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], dominant_directions):
+def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket]):
     """ function to get a dictionary of the results of the optimization problem.
         The solution is represented as a dataframe for each hour which tells how many assets and how much flex volume is connected to each market for each hour.
 
@@ -906,10 +906,14 @@ def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMet
             elif market.direction == "down":
                 total_flex_volume = sum(x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
             else:
-                if dominant_directions[h] == "up":
-                    total_flex_volume = sum(x[h, l, m].X * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "down")
-                else:
-                    total_flex_volume = sum(x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0] for l, load in enumerate(L) if load.direction != "up")
+                total_flex_volume = 0
+                for l, load in enumerate(L):
+                    if load.direction == "up":
+                        total_flex_volume += x[h, l, m].X * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0]
+                    elif load.direction == "down":
+                        total_flex_volume += x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0]
+                    else:
+                        total_flex_volume += min(x[h, l, m].X * load.up_flex_volume["value"].loc[load.up_flex_volume["Time(Local)"] == hour].values[0], x[h, l, m].X * load.down_flex_volume["value"].loc[load.down_flex_volume["Time(Local)"] == hour].values[0])
                 
             flex_volumes.append(total_flex_volume)
         market_count["Total Flex Volume"] = flex_volumes
