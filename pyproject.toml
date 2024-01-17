@@ -58,6 +58,8 @@ tzdata = "2023.3"
 wcwidth = "0.2.12"
 zipp = "3.17.0"
 numba = "^0.58.1"
+requests = "^2.31.0"
+torch = "^2.1.2"
 
 
 [build-system]
