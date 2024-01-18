@@ -563,13 +563,13 @@ def get_market_list(tf , spot_path : str,  fcr_d_1_path : str,  fcr_d_2_path : s
     Returns:
         list(ReserveMarket): list of all the possible  markets
     """
-    FFR_markets = create_FFR_markets(start_year= tf.year, start_month= tf.start_month, start_day = tf.start_day, end_year = tf.year, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour)
+    #FFR_markets = create_FFR_markets(start_year= tf.year, start_month= tf.start_month, start_day = tf.start_day, end_year = tf.year, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour)
     FCR_D_1_D_markets, FCR_D_1_N_markets , FCR_D_2_N_markets , FCR_D_2_D_markets = create_FCR_dfs(fcr_d_1_path = fcr_d_1_path,  fcr_d_2_path = fcr_d_2_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, end_month = tf.end_month, end_day = tf.end_day, start_hour = tf.start_hour, end_hour = tf.end_hour, areas = areas)
     aFRR_up_markets, aFRR_down_markets = create_afrr_dfs(up_directory = afrr_up_directory, down_directory = afrr_down_directory, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour, areas = areas)
     RK_down_markets , RK_up_markets = create_rk_markets(spot_path= spot_path, price_down_path = rk_price_down_path, price_up_path = rk_price_up_path, volume_down_path= rk_volume_down_path, volume_up_path = rk_volume_up_path, start_month = tf.start_month, year = tf.year, start_day = tf.start_day, start_hour = tf.start_hour, end_hour = tf.end_hour, end_month = tf.end_month, end_day = tf.end_day, areas = areas)
-    RKOM_B_down_markets, RKOM_B_up_markets, RKOM_H_down_markets, RKOM_H_up_markets = create_RKOM_markets(rkom_22_path = rkom_22_path, rkom_23_path = rkom_23_path, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour, areas = areas)
-    all_market_list = FFR_markets + FCR_D_1_D_markets + FCR_D_1_N_markets + FCR_D_2_N_markets + FCR_D_2_D_markets + aFRR_up_markets + aFRR_down_markets + RK_down_markets + RK_up_markets + RKOM_B_down_markets + RKOM_B_up_markets + RKOM_H_down_markets + RKOM_H_up_markets
-
+    #RKOM_B_down_markets, RKOM_B_up_markets, RKOM_H_down_markets, RKOM_H_up_markets = create_RKOM_markets(rkom_22_path = rkom_22_path, rkom_23_path = rkom_23_path, year = tf.year, start_month = tf.start_month, start_day = tf.start_day, start_hour = tf.start_hour, end_month = tf.end_month, end_day = tf.end_day, end_hour = tf.end_hour, areas = areas)
+    #all_market_list = FFR_markets + FCR_D_1_D_markets + FCR_D_1_N_markets + FCR_D_2_N_markets + FCR_D_2_D_markets + aFRR_up_markets + aFRR_down_markets + RK_down_markets + RK_up_markets + RKOM_B_down_markets + RKOM_B_up_markets + RKOM_H_down_markets + RKOM_H_up_markets
+    all_market_list = FCR_D_1_D_markets + FCR_D_1_N_markets + FCR_D_2_N_markets + FCR_D_2_D_markets + aFRR_up_markets + aFRR_down_markets + RK_down_markets + RK_up_markets 
     return all_market_list
     
 
