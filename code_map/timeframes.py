@@ -19,6 +19,8 @@ one_day = TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = 26,
 
 two_days = TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = 25, end_day = 26, start_hour = 0, end_hour = 23)
 
+three_days = TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = 20, end_day = 22, start_hour = 0, end_hour = 23)
+
 one_week = TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = 19, end_day = 25, start_hour = 0, end_hour = 23)
 
 half_month =  TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = 14, end_day = 30, start_hour = 0, end_hour = 23)
