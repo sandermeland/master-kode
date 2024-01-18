@@ -7,7 +7,8 @@ from datetime import datetime
 import math
 
 def get_collections(timeframe : timeframes.TimeFrame):
-    L, M, F, H, freq_data, _, _ = utils.get_all_sets(timeframe)
+    L, M, H = utils.get_all_sets(timeframe)
+    F, freq_data, _ = utils.get_frequency_sets(timeframe, H, M)
     L_u, L_d, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m = utils.get_parameters(L,M,H)
     markets_name_dict = {market.name: market for market in M}
     print(f"Amount of markets : {len(M)}")
@@ -75,7 +76,7 @@ def get_market_count_dict(x : dict, H : [pd.Timestamp], L : [new_meters.PowerMet
         market_count_dict[hour] = market_count
     return market_count_dict
 
-def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], F : dict, freq_data :pd.DataFrame, P_h_m : np.array, Vp_h_m : np.array, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, compatible_list : dict, log_filename : str, model_name : str):
+def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp], P_h_m : np.array, Vp_h_m : np.array, Vm_m : list, R_m : list, R_h_l : np.array, Fu_h_l : np.array, Fd_h_l : np.array, compatible_list : dict, log_filename : str, model_name : str):
     """ Function to create and run an optimization model for bidding in the reserve markets for a given set of meters and markets. 
     The bidding is for historical data. The model is run in batches to avoid memory issues. Therefore the H list is splitted in to batches of 24 hours. So the model is run for each batch.
     The parameters that has values for h are splitted in to batches of the same length as the H batch to make sure that the values are correct for each batch.
@@ -128,13 +129,13 @@ def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_marke
         batch_Fd_h_l = Fd_h_l[start_index:end_index, :]
         batch_Vp_h_m = Vp_h_m[start_index:end_index, :]
         batch_P_h_m = P_h_m[start_index:end_index, :]
-        tf = timeframes.TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = batch_H[0].day, end_day = batch_H[0].day, start_hour = 0, end_hour = 23)
-
+        batch_tf = timeframes.TimeFrame(year = 2023, start_month = 6, end_month = 6, start_day = batch_H[0].day, end_day = batch_H[0].day, start_hour = 0, end_hour = 23)
+        batch_F, batch_freq_data, _ = utils.get_frequency_sets(tf = batch_tf, H = batch_H, M = M)
         # the income
-        batch_Ir_hlm, batch_Ia_hlm, batch_Va_hm = utils.get_income_dictionaries(H = batch_H, M = M, L =L, freq_data = freq_data, Fu_h_l = batch_Fu_h_l, Fd_h_l = batch_Fd_h_l, P_h_m = batch_P_h_m, Vp_h_m = batch_Vp_h_m, F =F, markets_dict = market_name_dict, timeframe = tf)
+        batch_Ir_hlm, batch_Ia_hlm, batch_Va_hm = utils.get_income_dictionaries(H = batch_H, M = M, L = L, freq_data = batch_freq_data, Fu_h_l = batch_Fu_h_l, Fd_h_l = batch_Fd_h_l, P_h_m = batch_P_h_m, Vp_h_m = batch_Vp_h_m, F = batch_F, markets_dict = market_name_dict, timeframe = batch_tf)
        
         # Run the optimization model for this batch
-        model, x, y, w, _ = utils.run_optimization_model(L= L, M= M, H = batch_H,F= F, Ir_hlm= batch_Ir_hlm, Ia_hlm= batch_Ia_hlm, Va_hm= batch_Va_hm, Vp_h_m= batch_Vp_h_m, Vm_m=Vm_m, R_m=R_m, R_h_l=batch_R_h_l, Fu_h_l=batch_Fu_h_l, Fd_h_l=batch_Fd_h_l, compatible_list=compatible_list, log_filename=log_filename, model_name=f"{model_name}_batch_{b}")
+        model, x, y, w, _ = utils.run_optimization_model(L= L, M= M, H = batch_H,F= batch_F, Ir_hlm= batch_Ir_hlm, Ia_hlm= batch_Ia_hlm, Va_hm= batch_Va_hm, Vp_h_m= batch_Vp_h_m, Vm_m=Vm_m, R_m=R_m, R_h_l=batch_R_h_l, Fu_h_l=batch_Fu_h_l, Fd_h_l=batch_Fd_h_l, compatible_list=compatible_list, log_filename=log_filename, model_name=f"{model_name}_batch_{b}")
         # Store results
         aggregated_results['models'].append(model)
         aggregated_results['x_values'].append(x)
@@ -149,7 +150,7 @@ def run_batched_optimization_model(L : [new_meters.PowerMeter], M : [final_marke
     return aggregated_results, result_dicts
 
 
-def run_wanted_optimization_model(timeframe : timeframes.TimeFrame, log_filename : str, model_name : str, batched : bool = False):
+def run_one_optimization_model(timeframe : timeframes.TimeFrame, log_filename : str, model_name : str, batched : bool = False):
     L, M, F, H, freq_data, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m, markets_name_dict, dominant_directions, Ir_hlm, Ia_hlm, Va_hm, compatible_list = get_collections(timeframe)
     if batched:
         agg_res, results_dict = run_batched_optimization_model(L = L, M = M, H = H, F = F, freq_data= freq_data, Fu_h_l = Fu_h_l, Fd_h_l = Fd_h_l, R_h_l = R_h_l, P_h_m = P_h_m, Vp_h_m = Vp_h_m, Vm_m = Vm_m, R_m = R_m, compatible_list = compatible_list, model_name = model_name, log_filename = log_filename)
@@ -160,10 +161,34 @@ def run_wanted_optimization_model(timeframe : timeframes.TimeFrame, log_filename
         return model, x , y, w , market_count_dict
     
 
-def run_and_compare_solutions(tf_ord, tf_batched, lf_ord, lf_batched, mn_ord, mn_batched):
-    agg_res, results_dict = run_wanted_optimization_model(timeframe = tf_batched, log_filename = lf_batched, model_name = mn_batched, batched = True)
-    mod, x, y, w, market_count_dict = run_wanted_optimization_model(timeframe = tf_ord, log_filename = lf_ord, model_name = mn_ord, batched = False)
+def run_and_compare_solutions(tf, lf_ord, lf_batched, mn_ord, mn_batched):
+    L, M, F, H, _, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m, _, _, Ir_hlm, Ia_hlm, Va_hm, compatible_list = get_collections(tf)
+    agg_res, results_dict = run_batched_optimization_model(L = L, M = M, H = H, Fu_h_l = Fu_h_l, Fd_h_l = Fd_h_l, R_h_l = R_h_l, P_h_m = P_h_m, Vp_h_m = Vp_h_m, Vm_m = Vm_m, R_m = R_m, compatible_list = compatible_list, model_name = mn_batched, log_filename = lf_batched)
+    mod, x , y, w ,_ = utils.run_optimization_model(L = L, M = M, H = H, F = F, Fu_h_l = Fu_h_l, Fd_h_l = Fd_h_l, R_h_l = R_h_l,  Vp_h_m = Vp_h_m, Vm_m = Vm_m, R_m = R_m, Ir_hlm = Ir_hlm, Ia_hlm = Ia_hlm, Va_hm = Va_hm, compatible_list = compatible_list, model_name = mn_ord, log_filename = lf_ord)
+    market_count_dict = get_market_count_dict(x, H, L, M, Fu_h_l, Fd_h_l)
     return mod, x, y, w, market_count_dict, agg_res, results_dict
 
 
-mod, x, y, w, market_count_dict, aggregated_results, results_dict = run_and_compare_solutions(tf_ord= timeframes.two_days, tf_batched = timeframes.two_days, lf_ord = "ordinary_two_days.log", lf_batched = "batched_two_days.log", mn_ord = "ordinary_model_two_days", mn_batched = "batched_model_two_days")
+mod, x, y, w, market_count_dict, aggregated_results, results_dict = run_and_compare_solutions(tf= timeframes.two_days, lf_ord = "ordinary_two_days.log", lf_batched = "batched_two_days.log", mn_ord = "ordinary_model_two_days", mn_batched = "batched_model_two_days")
+
+
+
+# print the results in a log file
+with open("results_two_days_model_two_versions.txt", "w") as f:
+    f.write(f"Results from ordinary model and batched model where both models are run for two days where the collections was loaded one time. \n")
+    equal_count = 0
+    total_count = 0
+    for i in range(len(results_dict)):
+        f.write(f"Batch {i} \n")
+        for key in results_dict[i].keys():
+            f.write(f"Hour {key} \n")
+            f.write(f"Result from batched model \n {results_dict[i][key]} \n")
+            f.write(f"Result from ordinary model \n {market_count_dict[key]} \n")
+            f.write(f"Equal :  {results_dict[i][key].equals(market_count_dict[key])} \n")
+            total_count += 1
+            if results_dict[i][key].equals(market_count_dict[key]):
+                equal_count += 1
+    f.write(f"Amount of equal results : {equal_count} / {total_count} \n")
+        
+
+
