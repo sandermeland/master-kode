@@ -214,11 +214,7 @@ def get_all_sets(timeframe : timeframes.TimeFrame, areas = ["NO1", "NO2", "NO3",
     Returns:
         L (list) : list of powermeter objects with the data for each meter within the timeframe
         M (list) : list of reservemarket objects with the data for each market within the timeframe
-        F (dict) : dictionary of the activation percentages for each market and hour due to the frequency data
         H (list) : list of timestamps for the given timeframe
-        freq_data (pd.DataFrame) : dataframe of the frequency data for the given timeframe
-        power_meter_dict (dict) : dictionary of the powermeter's consumption data for each hour within the timeframe
-        consumption_data (pd.DataFrame) : dataframe of all the meters' consumption data
     """
     #FCR DIRECTORIES
     fcr_d_1_directory = "../master-data/markets-data/FCR_D-1-2023.xlsx"
@@ -247,18 +243,33 @@ def get_all_sets(timeframe : timeframes.TimeFrame, areas = ["NO1", "NO2", "NO3",
     consumption_data =pd.read_csv('../master-data/customers-data/added_type_and_comp.csv')
     all_market_list = final_markets.get_market_list(tf = timeframe, spot_path=spot_path, fcr_d_1_path= fcr_d_1_directory, fcr_d_2_path=fcr_d_2_directory, afrr_up_directory=afrr_up_directory, afrr_down_directory=afrr_down_directory, rk_price_down_path=rk_price_down_path,rk_price_up_path= rk_price_up_path, rk_volume_up_path=rk_volume_up_path, rk_volume_down_path=rk_volume_down_path, rkom_22_path=rkom_2022_path, rkom_23_path= rkom_2023_path, areas=areas)
     power_meter_dict = new_meters.create_meter_objects(consumption_data = consumption_data, tf= timeframe, reference_tf= timeframes.one_month, category_path_list=cat_path_list, areas = areas) 
-    freq_data = get_frequency_data(tf = timeframe, freq_directory= '../master-data/frequency_data/2023-06')
     
     H = get_timestamps(tf = timeframe)
 
     # Define the sets
     L = list(power_meter_dict.values())  # List of PowerMeter objects
     M = all_market_list  # List of ReserveMarket objects
+    
+    return L, M, H
 
+def get_frequency_sets(tf : timeframes.TimeFrame, H, M):
+    """ Function to get the sets needed for the optimization problem that are based on the frequency data
+
+    Args:
+        timeframe (TimeFrame): the wanted timeframe where the data is wanted
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+
+    Returns:
+        F (dict) : dictionary of the activation percentages for each market and hour due to the frequency data
+        freq_data (pd.DataFrame) : dataframe of the frequency data for the given timeframe
+        frequency_quarters (dict) : dictionary of the middle value for the frequency for each frequency in each hour
+
+    """
+    freq_data = get_frequency_data(tf = tf, freq_directory= '../master-data/frequency_data/2023-06')
     F = get_FCR_N_percentages(freq_df = freq_data, hours = H , markets = M)
-    
-    
-    return L, M, F, H, freq_data, power_meter_dict, consumption_data
+    frequency_quarters = find_frequency_quarters(freq_df = freq_data, hours = H, index = True)
+    return F, freq_data, frequency_quarters
 
 def get_parameters(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], H : [pd.Timestamp]):
     """ function to return the sets needed for the optimization problem
@@ -368,10 +379,10 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
                     elif load.direction == "down":
                         Ir_hlm[h,l ,m] = Fd_h_l[h,l] * P_h_m[h,m]
                     else:
-                        up_val, down_val = F[h,m]
+                        #up_val, down_val = F[h,m]
                         ## the reservation price should only depend on which direction has the lowst aggregated volume. 
                         # FCR-N should have bids with equal volume in both directions and therefore it depends on the lowest volume of the portfolio
-                        Ir_hlm[h,l,m] = (Fu_h_l[h,l] * up_val + Fd_h_l[h,l] * down_val) * P_h_m[h,m] 
+                        Ir_hlm[h,l,m] = min(Fu_h_l[h,l], Fd_h_l[h,l]) * P_h_m[h,m] 
                 elif market.direction == "up":
                     Ir_hlm[h,l,m] = Fu_h_l[h,l] * P_h_m[h,m] if load.direction != "down" else 0
                 else: # market.direction == "down"
@@ -382,18 +393,21 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
                         Va_hm[h,m] = Vp_h_m[h,m] #* (up_val + down_val) if (up_val + down_val) > 0 else 0
                         frequency_quarters = frequency_quarter_dict[h]
                         if load.direction == "both":
-                            activation_vol = (Fu_h_l[h,l] * up_val + Fd_h_l[h,l] * down_val)
+                            activation_vol = min(Fu_h_l[h,l], Fd_h_l[h,l])
                             # Add to the objective expression
                         elif load.direction == "up":
                             activation_vol = Fu_h_l[h,l]
                         else: # load.direction == "down"
                             activation_vol = Fd_h_l[h,l]
-                        activated_FCR = 2000 * activation_vol - 10 * activation_vol * sum(frequency_quarters) # can this give nan value?
-                        if activated_FCR < 0:
-                            activated_FCR = activated_FCR * -1
-                            Ia_hlm[h,l,m] = activated_FCR * RK_down_prices[(market.area, hour)] # nan values here?
-                        else:
-                            Ia_hlm[h,l,m] = activated_FCR * RK_up_prices[(market.area, hour)] # nan values here?
+
+                        # get values from frequency_quarters that are over 50.0 Hz
+                        fq_over_50 = [fq for fq in frequency_quarters if fq > 50.0]
+                        fq_under_50 = [fq for fq in frequency_quarters if fq < 50.0]
+                        activated_FCR_N_up = activation_vol * 10 *(len(fq_over_50) * 50 - sum(fq_over_50)) # this should be a postive value
+                        activated_FCR_N_down = activation_vol * 10 *(len(fq_under_50) * 50 - sum(fq_under_50)) # this should be a negative value
+                        
+                        Ia_hlm[h,l,m] = activated_FCR_N_up * RK_down_prices[(market.area, hour)] + activated_FCR_N_down * RK_up_prices[(market.area, hour)] # nan values here?
+                        
                         
                     elif "aFRR" in market.name: # will have to add the other markets later - especially aFRR and RKOM
                         if market.direction == "up":
