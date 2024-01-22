@@ -91,6 +91,8 @@ def normalize_dict_vals(dict : dict, norm_method :str = "min_max" ) -> dict:
         normalized_dict = {k: (v - mean) / std for k, v in dict.items()}
 
     return normalized_dict
+
+
  
 def get_possible_dates(date : pd.Timestamp):
     """ Function to get the possible dates for placing a bid given the current date
@@ -252,7 +254,7 @@ def get_max_portfolio_for_market(possible_assets : [new_meters.PowerMeter], mark
     else:
         return [], 0
     
-def normalize_weather_data(weather_data, scaler = sklearn.preprocessing.MinMaxScaler()):
+def normalize_weather_data(weather_data, scaler = sklearn.preprocessing.MinMaxScaler(), ):
     data = weather_data.copy()
     data["precipitation"] = scaler.fit_transform(data[["precipitation"]])
     data["air_temp"] = scaler.fit_transform(data[["air_temp"]])
