@@ -214,7 +214,7 @@ def get_weather_data(tf : timeframes.TimeFrame, sa_dict: dict, wanted_sources : 
     df2['referenceTime'] = pd.to_datetime(df2['referenceTime'])
     return df, df2
 
-station, sa_dict = get_sources_with_areas()
+"""station, sa_dict = get_sources_with_areas()
 
 table_stations, table_sa_dict = get_sources_with_areas_from_table()
 
@@ -241,7 +241,7 @@ cloud_area_rt.loc[cloud_area_rt['area'] == "NO5"]
 cloud_area_rt['referenceTime'].unique()
 cloud_area_rt['value'].unique()
 cloud_area_rt.loc[cloud_area_rt['value'] == 9.0]
-cloud_area_rt.loc[cloud_area_rt['referenceTime'] == pd.Timestamp('2023-06-24 15:00:00+0000', tz='UTC')]
+cloud_area_rt.loc[cloud_area_rt['referenceTime'] == pd.Timestamp('2023-06-24 15:00:00+0000', tz='UTC')]"""
 
 def get_wanted_weather_values(orig_df, elementId, area):
     # groupby elementid and area and then find hourly mean for each day
@@ -256,7 +256,7 @@ def get_wanted_weather_values(orig_df, elementId, area):
     #mean_values_per_hour = mean_values_per_hour.reset_index()
     return mean_values_per_hour
 
-get_wanted_weather_values(df2, elementId= 'cloud_area_fraction', area = 'NO5')
+#get_wanted_weather_values(df2, elementId= 'cloud_area_fraction', area = 'NO5')
 
 
 def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : timeframes.TimeFrame, norm_method = "min_max", areas = ["NO1", "NO2", "NO3", "NO4", "NO5"],  elements  = ['air_temperature', 'sum(precipitation_amount P1D)', 'wind_speed', 'cloud_area_fraction']):
@@ -266,7 +266,7 @@ def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : t
     noramlized_dfs_dict = {}
     for element in elements:
         for area in areas:
-            print(f"element : {element}, area : {area}")
+            #print(f"element : {element}, area : {area}")
             element_df = get_wanted_weather_values(reference_df, elementId= element, area = area)
             
             if norm_method == "min_max":
@@ -285,11 +285,11 @@ def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : t
     return noramlized_dfs_dict
 
 
-weather_dict = get_normalized_weather_dfs(reference_tf= timeframes.one_month, usage_tf = timeframes.one_week, areas = ["NO5"])
+#weather_dict = get_normalized_weather_dfs(reference_tf= timeframes.one_month, usage_tf = timeframes.one_week, areas = ["NO5"])
 
-for i in weather_dict.keys():
+"""for i in weather_dict.keys():
     print(i)
-    print(weather_dict[i])
+    print(weather_dict[i])"""
 
 
 """want to include cloud_area_fraction as a id. 

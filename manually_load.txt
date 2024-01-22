@@ -1,6 +1,0 @@
-timeframe = timeframes.half_month
-L, M, F, H, freq_data, power_meter_dict, consumption_data = utils.get_all_sets(timeframe): 20m, 49s
-L_u, L_d, Fu_h_l, Fd_h_l, R_h_l, P_h_m, Vp_h_m, Vm_m, R_m = utils.get_parameters(L,M,H) : 3m, 3s
-dominant_directions = [utils.get_dominant_direction(freq_data, hour) for hour in H]
-Ir_hlm, Ia_hlm, Va_hm = utils.get_income_dictionaries(H, M, L, dominant_directions, Fu_h_l, Fd_h_l, P_h_m, Vp_h_m, F, markets_name_dict, timeframe=timeframe) : 5m, 59s
-compatible_list = utils.get_compatibility_list(H=H, L=L, M=M) : 3m, 46 s
