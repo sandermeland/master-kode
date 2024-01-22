@@ -374,7 +374,7 @@ combined_df_batch = pd.concat([pd.concat(results_dict[i], ignore_index=True) for
 sum(combined_df_batch["Asset Count"].loc[combined_df_batch["Hour"] == test_hour])"""
 
 # Asset Count  Total Flex Volume [MW]  Total capacity incume [EUR/MW]  Total activation income [EUR/MW]
-def plot_results(results_dict : list, market_count_dict : dict, aggregated : bool = False):
+def plot_results(results_dict : list, market_count_dict : dict, aggregated : bool = False, both_results : bool = False):
     
     #concatenate all the results from the batched model where the results are stored as dataframes in a dict for each hour inside a list for each episode
     combined_df_batch = pd.concat([pd.concat(results_dict[i], ignore_index=True) for i in range(len(results_dict))], ignore_index=True)
@@ -384,13 +384,15 @@ def plot_results(results_dict : list, market_count_dict : dict, aggregated : boo
     for column in ["Asset Count",  "Total Flex Volume [MW]",  "Total capacity incume [EUR/MW]",  "Total activation income [EUR/MW]"]:
         fig = go.Figure()
         if aggregated:
-
             fig.add_trace(go.Scatter(x = combined_df_batch["Hour"], y = [sum(combined_df_batch[column].loc[combined_df_batch["Hour"] == hour]) for hour in combined_df_batch["Hour"]], mode = "lines", name = f"{column} in batched model"))
+            if both_results:
+                fig.add_trace(go.Scatter(x = combined_df_org["Hour"], y = [sum(combined_df_org[column].loc[combined_df_org["Hour"] == hour]) for hour in combined_df_org["Hour"]], mode = "lines", name = f"{column} in ordinary model"))
         else:
             for market in combined_df_batch["Market"].unique():
                 market_data = combined_df_batch.loc[combined_df_batch["Market"] == market]
                 fig.add_trace(go.Scatter(x = market_data["Hour"], y = market_data[column], mode = "markers", name = f"{market} in batched model"))
-                    #fig.add_trace(go.Scatter(x = combined_df_org["Hour"], y = combined_df_org.loc[combined_df_org["Market"] == market, column], mode = "markers", name = f"{column} for {market} ordinary model"))
+                if both_results:
+                    fig.add_trace(go.Scatter(x = combined_df_org["Hour"], y = combined_df_org.loc[combined_df_org["Market"] == market, column], mode = "markers", name = f"{column} for {market} ordinary model"))
         fig.update_xaxes(title_text="Hours")
         fig.update_yaxes(title_text= column)
         fig.update_layout(title_text=f"{column} by Market and Hour from the optimization model")
