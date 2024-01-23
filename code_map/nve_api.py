@@ -15,38 +15,55 @@ Args:
 Returns:
     fyllingsgrad_df (pd.DataFrame): dataframe with the wanted data
 """
-year= 2023
+def get_fyllinsgrad_df(areas = ["NO1", "NO2", "NO3", "NO4", "NO5"], year : int = 2023) -> pd.DataFrame:
+    """ Function to get data for fyllingsgrad from the NVE API. 
+        The data is returned as a pandas dataframe with the following columns: 
+        Uke, Dato, Fyllingsgrad, Område, Endring fyllinsgrad, Kapasitet TWh, Fylling TWh
 
-request_url = "https://biapi.nve.no/magasinstatistikk/api/Magasinstatistikk/HentOffentligData"
+        The Dato column is converted to datetime format and the timezone is set to Europe/Oslo
+        Fyllingsgrad and Endring fyllingsgrad are in percent which means that it doesnt need to be normalized.
+        Kapasitet TWh and Fylling TWh are in TWh which meand they needs to be normalized if they should be used.
+    Args:
+        areas (list, optional): List of the areas wanted. Defaults to ["NO1", "NO2", "NO3", "NO4", "NO5"].
+        year (int, optional): For which year the data is wanted. Defaults to 2023.
 
-response = requests.get(request_url)
+    Returns:
+        pd.DataFrame: Dataframe with the wanted data
+    """
 
-nve_dict_list = response.json()
-new_list = []
-for dict in nve_dict_list:
-    if dict["iso_aar"] == year and dict["omrType"] == "EL":
-        new_list.append(dict)
+    request_url = "https://biapi.nve.no/magasinstatistikk/api/Magasinstatistikk/HentOffentligData"
+
+    response = requests.get(request_url)
+
+    nve_dict_list = response.json()
+    new_list = []
+    for dict in nve_dict_list:
+        if dict["iso_aar"] == year and dict["omrType"] == "EL":
+            new_list.append(dict)
+        else:
+            continue
+
+    fyllingsgrad_df = pd.DataFrame(columns = ["Uke", "Dato", "Fyllingsgrad", "Område", "Endring fyllinsgrad", "Kapasitet TWh", "Fylling TWh"])
+
+    for dict in new_list:
+        fyllingsgrad_df.loc[len(fyllingsgrad_df)] = [dict["iso_uke"], dict["dato_Id"], dict["fyllingsgrad"], dict["omrnr"], dict["endring_fyllingsgrad"], dict["kapasitet_TWh"], dict["fylling_TWh"], ]
+        #print(len(fyllingsgrad_df))
+
+    fyllingsgrad_df.sort_values(by = ["Uke", "Område"], inplace = True)
+    fyllingsgrad_df["Dato"]
+    date_format = '%Y-%m-%d'
+    fyllingsgrad_df["Dato"] = pd.to_datetime(fyllingsgrad_df["Dato"], format = date_format, utc = True)
+    fyllingsgrad_df["Dato"] = fyllingsgrad_df["Dato"].dt.tz_convert('Europe/Oslo')
+    int_to_area_dict = {1 : "NO1", 2 : "NO2", 3 : "NO3", 4 : "NO4", 5 : "NO5"}
+    fyllingsgrad_df["Område"] = fyllingsgrad_df["Område"].apply(lambda x : int_to_area_dict[x])
+
+    if len(areas) >= 5:
+        return fyllingsgrad_df
     else:
-        continue
+        fyllingsgrad_df = fyllingsgrad_df.loc[fyllingsgrad_df["Område"].isin(areas)]
+        return fyllingsgrad_df.reset_index(drop = True)
 
-#new_list[0].keys()
-#len(new_list)
-
-fyllingsgrad_df = pd.DataFrame(columns = ["Uke", "Dato", "Fyllingsgrad", "Område", "Endring fyllinsgrad", "Kapasitet TWh", "Fylling TWh"])
-
-for dict in new_list:
-    fyllingsgrad_df.loc[len(fyllingsgrad_df)] = [dict["iso_uke"], dict["dato_Id"], dict["fyllingsgrad"], dict["omrnr"], dict["endring_fyllingsgrad"], dict["kapasitet_TWh"], dict["fylling_TWh"], ]
-    print(len(fyllingsgrad_df))
-
-
-fyllingsgrad_df.sort_values(by = ["Uke"], inplace = True)
-fyllingsgrad_df["Dato"]
-date_format = '%Y-%m-%d'
-fyllingsgrad_df["Dato"] = pd.to_datetime(fyllingsgrad_df["Dato"], format = date_format, utc = True)
-fyllingsgrad_df["Dato"] = fyllingsgrad_df["Dato"].dt.tz_convert('Europe/Oslo')
-
-    
-fyllingsgrad_df
+#get_fyllinsgrad_df(areas = ["NO5"])
 
 
 #fdf = get_fyllingsgrad_df(year =2023)

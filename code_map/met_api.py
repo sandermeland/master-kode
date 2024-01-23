@@ -262,7 +262,6 @@ def get_wanted_weather_values(orig_df, elementId, area):
 def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : timeframes.TimeFrame, norm_method = "min_max", areas = ["NO1", "NO2", "NO3", "NO4", "NO5"],  elements  = ['air_temperature', 'sum(precipitation_amount P1D)', 'wind_speed', 'cloud_area_fraction']):
     stations, sa_dict = get_station_ids(n=6, areas = areas)
     _, reference_df = get_weather_data(tf = reference_tf, wanted_sources= stations, sa_dict = sa_dict ,wanted_elements= elements )
-    usage_hours = utils.get_timestamps(usage_tf)
     noramlized_dfs_dict = {}
     for element in elements:
         for area in areas:
@@ -270,7 +269,7 @@ def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : t
             element_df = get_wanted_weather_values(reference_df, elementId= element, area = area)
             
             if norm_method == "min_max":
-                print(element_df)
+                #print(element_df)
                 min_val = element_df.min()
                 max_val = element_df.max()
                 element_df = (element_df - min_val) / (max_val - min_val)
@@ -278,16 +277,15 @@ def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : t
                 mean_val = element_df.mean()
                 std_val = element_df.std()
                 element_df = (element_df - mean_val) / std_val
-
-            usage_df = element_df.loc[element_df.index.isin(usage_hours)]
+            usage_df = element_df.loc[element_df.index.isin(utils.get_timestamps(usage_tf))]
             noramlized_dfs_dict[(element, area)]  = usage_df
 
     return noramlized_dfs_dict
 
 
-#weather_dict = get_normalized_weather_dfs(reference_tf= timeframes.one_month, usage_tf = timeframes.one_week, areas = ["NO5"])
+"""weather_dict = get_normalized_weather_dfs(reference_tf= timeframes.one_month, usage_tf = timeframes.one_week, areas = ["NO5"])
 
-"""for i in weather_dict.keys():
+for i in weather_dict.keys():
     print(i)
     print(weather_dict[i])"""
 
