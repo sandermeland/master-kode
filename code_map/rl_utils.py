@@ -340,6 +340,59 @@ def make_bid(market : final_markets.ReserveMarket, hour : pd.Timestamp, action :
         return portfolio, get_income_for_portfolio(volume, market, hour), volume
     
 
-def initialize_weights(n_features :int , n_actions : int):
-    return [np.zeros((n_features)) for _ in range(n_actions)]
+def get_market_count_df(x : dict, y: dict, w : dict,  H : [pd.Timestamp], L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], Ir_hlm, Ia_hlm, Fu_h_l, Fd_h_l):
+    """ function to get a dictionary of the results of the optimization problem.
+        The solution is represented as a dataframe for each hour which tells how many assets and how much flex volume is connected to each market for each hour.
+
+    Args:
+        x (dict): dictionary of the binary variable which tells if an asset is connected to a market
+        L (list(PowerMeter)): list of powermeter objects with the data for each meter within the timeframe
+        M (list(ReserveMarket)): list of reservemarket objects with the data for each market within the timeframe
+        H (list(pd.TimeStamp)): list of hourly timestamps within the timeframe
+        dominant_directions (list(str)): list of the dominant direction for each hour
+
+    Returns:
+        dict: the solution of the optimization problem
+    """
+    
+    df = pd.DataFrame(columns=["Market", "Hour", "Asset Count","Total Flex Volume [MWh]", "Total capacity revenue [EUR]", "Total activation revenue [EUR]"])
+    for h, hour in enumerate(H):
+        for m, market in enumerate(M):
+            if y[h, m].X > 0:
+                amount_of_assets = sum(x[h, l, m].X for l in range(len(L)))
+                capacity_income = sum(x[h, l, m].X * Ir_hlm[h, l, m] for l in range(len(L)))
+                activation_income = sum(x[h, l, m].X * Ia_hlm[h, l, m] * w[h,m].X for l in range(len(L)))
+                if market.direction == "up":
+                    total_flex_volume = sum(x[h, l, m].X * Fu_h_l[h,l] for l in range(len(L)))
+                elif market.direction == "down":
+                    total_flex_volume = sum(x[h, l, m].X * Fd_h_l[h,l] for l in range(len(L)))
+                else:
+                    total_flex_volume = 0
+                    for l, load in enumerate(L):
+                        if load.direction == "up":
+                            total_flex_volume += x[h, l, m].X * Fu_h_l[h,l]
+                        elif load.direction == "down":
+                            total_flex_volume += x[h, l, m].X * Fd_h_l[h,l]
+                        else:
+                            total_flex_volume += min(x[h, l, m].X * Fu_h_l[h,l], x[h, l, m].X * Fd_h_l[h,l])
+                           
+                df.loc[len(df)] = [market.name, hour, amount_of_assets, total_flex_volume, capacity_income, activation_income]
+    return df
+
+
+def initialize_weights(n_features :int , n_actions : int, zeros : bool = False):
+    """ Function to initialize the weights to use in the RL model
+
+    Args:
+        n_features (int): number of features
+        n_actions (int): number of actions
+        zeros (bool, optional): If True, the weights will be initialized to zeros. Defaults to False which means that the weights will be initialized to random values between 0 and 0.1.
+
+    Returns:
+        np.array([np.array()]): the weights in a nested array of shape (n_actions, n_features)
+    """
+    if zeros:
+        return np.array([np.zeros((n_features)) for _ in range(n_actions)])
+    else:
+        return np.array([np.random.normal(0, 0.1, n_features) for _ in range(n_actions)])
 
