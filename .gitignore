@@ -3,7 +3,7 @@ myenv/
 *.pkl
 *.log
 *.txt
-
+*.csv
 
 
 
