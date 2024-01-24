@@ -15,7 +15,6 @@ Args:
 Returns:
     fyllingsgrad_df (pd.DataFrame): dataframe with the wanted data
 """
-<<<<<<< HEAD
 def get_fyllinsgrad_df(areas = ["NO1", "NO2", "NO3", "NO4", "NO5"], year : int = 2023) -> pd.DataFrame:
     """ Function to get data for fyllingsgrad from the NVE API. 
         The data is returned as a pandas dataframe with the following columns: 
@@ -65,40 +64,6 @@ def get_fyllinsgrad_df(areas = ["NO1", "NO2", "NO3", "NO4", "NO5"], year : int =
         return fyllingsgrad_df.reset_index(drop = True)
 
 #get_fyllinsgrad_df(areas = ["NO5"])
-=======
-year= 2023
-
-request_url = "https://biapi.nve.no/magasinstatistikk/api/Magasinstatistikk/HentOffentligData"
-
-response = requests.get(request_url)
-
-nve_dict_list = response.json()
-new_list = []
-for dict in nve_dict_list:
-    if dict["iso_aar"] == year and dict["omrType"] == "EL":
-        new_list.append(dict)
-    else:
-        continue
-
-#new_list[0].keys()
-#len(new_list)
-
-fyllingsgrad_df = pd.DataFrame(columns = ["Uke", "Dato", "Fyllingsgrad", "Område", "Endring fyllinsgrad", "Kapasitet TWh", "Fylling TWh"])
-
-for dict in new_list:
-    fyllingsgrad_df.loc[len(fyllingsgrad_df)] = [dict["iso_uke"], dict["dato_Id"], dict["fyllingsgrad"], dict["omrnr"], dict["endring_fyllingsgrad"], dict["kapasitet_TWh"], dict["fylling_TWh"], ]
-    print(len(fyllingsgrad_df))
-
-
-fyllingsgrad_df.sort_values(by = ["Uke"], inplace = True)
-fyllingsgrad_df["Dato"]
-date_format = '%Y-%m-%d'
-fyllingsgrad_df["Dato"] = pd.to_datetime(fyllingsgrad_df["Dato"], format = date_format, utc = True)
-fyllingsgrad_df["Dato"] = fyllingsgrad_df["Dato"].dt.tz_convert('Europe/Oslo')
-
-    
-fyllingsgrad_df
->>>>>>> 87f793b74b2c8f4bca7853f5a8c4e88d08c0a54b
 
 
 #fdf = get_fyllingsgrad_df(year =2023)

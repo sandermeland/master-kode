@@ -340,7 +340,6 @@ def make_bid(market : final_markets.ReserveMarket, hour : pd.Timestamp, action :
         return portfolio, get_income_for_portfolio(volume, market, hour), volume
     
 
-<<<<<<< HEAD
 def get_market_count_df(x : dict, y: dict, w : dict,  H : [pd.Timestamp], L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], Ir_hlm, Ia_hlm, Fu_h_l, Fd_h_l):
     """ function to get a dictionary of the results of the optimization problem.
         The solution is represented as a dataframe for each hour which tells how many assets and how much flex volume is connected to each market for each hour.
@@ -396,8 +395,6 @@ def initialize_weights(n_features :int , n_actions : int, zeros : bool = False):
         return np.array([np.zeros((n_features)) for _ in range(n_actions)])
     else:
         return np.array([np.random.normal(0, 0.1, n_features) for _ in range(n_actions)])
-=======
 def initialize_weights(n_features :int , n_actions : int):
     return [np.zeros((n_features)) for _ in range(n_actions)]
->>>>>>> 87f793b74b2c8f4bca7853f5a8c4e88d08c0a54b
 

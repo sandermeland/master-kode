@@ -262,10 +262,6 @@ def get_wanted_weather_values(orig_df, elementId, area):
 def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : timeframes.TimeFrame, norm_method = "min_max", areas = ["NO1", "NO2", "NO3", "NO4", "NO5"],  elements  = ['air_temperature', 'sum(precipitation_amount P1D)', 'wind_speed', 'cloud_area_fraction']):
     stations, sa_dict = get_station_ids(n=6, areas = areas)
     _, reference_df = get_weather_data(tf = reference_tf, wanted_sources= stations, sa_dict = sa_dict ,wanted_elements= elements )
-<<<<<<< HEAD
-=======
-    usage_hours = utils.get_timestamps(usage_tf)
->>>>>>> 87f793b74b2c8f4bca7853f5a8c4e88d08c0a54b
     noramlized_dfs_dict = {}
     for element in elements:
         for area in areas:
@@ -273,11 +269,7 @@ def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : t
             element_df = get_wanted_weather_values(reference_df, elementId= element, area = area)
             
             if norm_method == "min_max":
-<<<<<<< HEAD
                 #print(element_df)
-=======
-                print(element_df)
->>>>>>> 87f793b74b2c8f4bca7853f5a8c4e88d08c0a54b
                 min_val = element_df.min()
                 max_val = element_df.max()
                 element_df = (element_df - min_val) / (max_val - min_val)
@@ -285,26 +277,15 @@ def get_normalized_weather_dfs(reference_tf : timeframes.TimeFrame, usage_tf : t
                 mean_val = element_df.mean()
                 std_val = element_df.std()
                 element_df = (element_df - mean_val) / std_val
-<<<<<<< HEAD
             usage_df = element_df.loc[element_df.index.isin(utils.get_timestamps(usage_tf))]
-=======
-
-            usage_df = element_df.loc[element_df.index.isin(usage_hours)]
->>>>>>> 87f793b74b2c8f4bca7853f5a8c4e88d08c0a54b
             noramlized_dfs_dict[(element, area)]  = usage_df
 
     return noramlized_dfs_dict
 
 
-<<<<<<< HEAD
 """weather_dict = get_normalized_weather_dfs(reference_tf= timeframes.one_month, usage_tf = timeframes.one_week, areas = ["NO5"])
 
 for i in weather_dict.keys():
-=======
-#weather_dict = get_normalized_weather_dfs(reference_tf= timeframes.one_month, usage_tf = timeframes.one_week, areas = ["NO5"])
-
-"""for i in weather_dict.keys():
->>>>>>> 87f793b74b2c8f4bca7853f5a8c4e88d08c0a54b
     print(i)
     print(weather_dict[i])"""
 
