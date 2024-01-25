@@ -160,7 +160,7 @@ def get_feasible_portfolio_for_market(possible_assets : [new_meters.PowerMeter],
 
     return feasible_combination, total_volume
 
-def get_n_portfolios_for_market(possible_assets : [new_meters.PowerMeter], market : final_markets.ReserveMarket, hour : pd.Timestamp, compatible_dict : dict, top_n=100, iterations=100):
+def get_n_portfolios_for_market(possible_assets : [new_meters.PowerMeter], market : final_markets.ReserveMarket, hour : pd.Timestamp, compatible_dict : dict, top_n=100, iterations=100, sorting : str = "max"):
     """function to find a diverse and large subset of feasible combinations without the computational overhead of checking all possible combinations.
         DISCLAIMER : This function doesnt take procured volume in the given market in to account.
 
@@ -193,8 +193,13 @@ def get_n_portfolios_for_market(possible_assets : [new_meters.PowerMeter], marke
             
 
     # Sort assets by volume in descending order
-    asset_volumes.sort(key=lambda x: x[1], reverse=True)
-
+    if sorting == "max":
+        asset_volumes.sort(key=lambda x: x[1], reverse=True) # Not sure if this is necessarily so smart because it never finds portfolios of only "small" assets
+    elif sorting == "min":
+        asset_volumes.sort(key=lambda x: x[1], reverse=False)
+    else:
+        random.shuffle(asset_volumes)
+        
     # Select top N assets
     top_assets = asset_volumes[:top_n]
     
@@ -218,6 +223,7 @@ def get_n_portfolios_for_market(possible_assets : [new_meters.PowerMeter], marke
                     break
     
     return feasible_combinations
+
 
 
 def get_max_portfolio_for_market(possible_assets : [new_meters.PowerMeter], market : final_markets.ReserveMarket, hour : pd.Timestamp, compatible_dict : dict):
@@ -395,6 +401,8 @@ def initialize_weights(n_features :int , n_actions : int, zeros : bool = False):
         return np.array([np.zeros((n_features)) for _ in range(n_actions)])
     else:
         return np.array([np.random.normal(0, 0.1, n_features) for _ in range(n_actions)])
+
+
 def initialize_weights(n_features :int , n_actions : int):
     return [np.zeros((n_features)) for _ in range(n_actions)]
 
