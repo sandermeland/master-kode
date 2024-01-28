@@ -226,6 +226,7 @@ def get_n_portfolios_for_market(possible_assets : [new_meters.PowerMeter], marke
 
 
 
+
 def get_max_portfolio_for_market(possible_assets : [new_meters.PowerMeter], market : final_markets.ReserveMarket, hour : pd.Timestamp, compatible_dict : dict):
     """ Heuristic to bid all feasible assets in to the market in given hour. Equivalent to greedy approach
         DISCLAIMER : This function doesnt take procured volume in the given market in to account.

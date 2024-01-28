@@ -436,7 +436,7 @@ def get_income_dictionaries(H : [pd.Timestamp], M : [final_markets.ReserveMarket
                     Va_hm[h,m] = 0
     return Ir_hlm, Ia_hlm, Va_hm
 
-def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], index = True):
+def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.ReserveMarket], index = True, meter_id = False):
     """ function to get a dict of compatible markets for each asset. The dict is either a dict of lists of indexes or a dict of lists of objects.
         The function checks the response time, the area and the direction of the asset and the market to see if they are compatible
 
@@ -457,12 +457,21 @@ def get_compatibility_dict(L : [new_meters.PowerMeter], M : [final_markets.Reser
             if asset.response_time <= market.response_time and market.area == asset.area:
                 if market.direction == "up":
                     if asset.direction != "down":
-                        asset_list.append(l) if index else asset_list.append(asset)
+                        if meter_id:
+                            asset_list.append(asset.meter_id) if index else asset_list.append(asset.meter_id)
+                        else:
+                            asset_list.append(l) if index else asset_list.append(asset)
                 elif market.direction == "down":
                     if asset.direction != "up":
-                        asset_list.append(l) if index else asset_list.append(asset)
+                        if meter_id:
+                            asset_list.append(asset.meter_id) if index else asset_list.append(asset.meter_id)
+                        else:
+                            asset_list.append(l) if index else asset_list.append(asset)
                 else:
-                    asset_list.append(l) if index else asset_list.append(asset)
+                    if meter_id:
+                            asset_list.append(asset.meter_id) if index else asset_list.append(asset.meter_id)
+                    else:
+                        asset_list.append(l) if index else asset_list.append(asset)
         if index:
             compatible_dict[m] = asset_list
         else:
